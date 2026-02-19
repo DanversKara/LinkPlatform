@@ -377,3 +377,5 @@ Emails - send emails for reset accounts, signups, messages, etc
 Cloudflare Captcha
 Mobile / Desktop / Tablet Universal Layout aka Responsive Design
 Plans for a Mobile App for Android and iOS (must later down the road)
+Auto Backup and Restore Database for each update. When you run a new install, it will backup the database then restore it, so you dont lose profile, user, link, pages, data.
+- <b>RIGHT NOW YOU NEED TO BACK UP ALL DATABASE BEFORE YOU INSTALL ANY NEW RELEASES</b>
