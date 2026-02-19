@@ -365,3 +365,10 @@ MIT — do whatever you want with it.
 ---
 
 *Built with FastAPI · React · PostgreSQL · Docker*
+
+---
+
+Future Plans
+Emails - send emails for reset accounts, signups, messages, etc
+2FA APP and Backup codes
+Cloudflare Captcha
