@@ -378,7 +378,7 @@ MIT — do whatever you want with it.
 <p>2FA APP and Backup codes</p>
 <p>Cloudflare Captcha</p>
 <p>Mobile / Desktop / Tablet Universal Layout aka Responsive Design</p>
-<p>Plans for a Mobile App for Android and iOS (must later down the road)</p>
+<p>Plans for a Mobile App for Android and iOS (much later down the road)</p>
 <p>Auto Backup and Restore Database for each update. When you run a new install, it will backup the database then restore it, so you dont lose profile, user, link, pages, data. RIGHT NOW YOU NEED TO BACK UP ALL DATABASE BEFORE YOU INSTALL ANY NEW RELEASES</p>
 
 ---
