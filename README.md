@@ -376,3 +376,4 @@ Emails - send emails for reset accounts, signups, messages, etc
 2FA APP and Backup codes
 Cloudflare Captcha
 Mobile / Desktop / Tablet Universal Layout aka Responsive Design
+Plans for a Mobile App for Android and iOS (must later down the road)
