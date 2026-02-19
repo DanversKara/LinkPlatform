@@ -373,7 +373,7 @@ MIT — do whatever you want with it.
 
 ---
 
-Future Plans
+<b>Future Plans</b>
 Emails - send emails for reset accounts, signups, messages, etc
 2FA APP and Backup codes
 Cloudflare Captcha
