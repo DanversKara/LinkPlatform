@@ -15,6 +15,7 @@ A self-hosted, all-in-one link management platform. One script creates everythin
 | 📱 **QR Codes** | Every link gets a scannable QR code |
 | 🎨 **Bio Profiles** | Fully customizable public profile at `/@username` |
 | 📑 **Profile Tabs** | Links, Social, Contact, Text, Video, Gallery tab types |
+| 🎭 **Tab Styles** | Per-tab style: Solid, Glass, Frost, or Transparent |
 | 🖼️ **Image Uploads** | Upload profile photos, header images, tab backgrounds |
 | 💬 **Messaging** | Internal inbox, sent, and compose system |
 | 📄 **Custom Pages** | Create HTML pages at `/p/slug` — auto-listed in navigation |
@@ -59,7 +60,7 @@ docker compose version
 
 **Option A — Download from GitHub Releases (recommended):**
 ```bash
-wget https://github.com/DanversKara/LinkPlatform/releases/download/v10.3/setup.sh
+wget https://github.com/DanversKara/LinkPlatform/releases/download/v10.4/setup.sh
 ```
 
 **Option B — Clone the repo:**
@@ -161,7 +162,20 @@ Your link will appear on the **Dashboard** with its full URL, click count, and a
 2. Set a custom slug (e.g. `@johndoe`) — your profile URL will be `/@johndoe`
 3. Upload a profile photo and header image
 4. Add tabs: Links, Social icons, Contact info, Text blocks, Video embeds, or Gallery
-5. Customize colors, background, and CSS
+5. Choose a **Tab Style** per tab — Solid, Glass, Frost, or Transparent
+6. Customize colors, background image, and custom CSS
+
+### Tab Styles
+Each profile tab has its own style setting, chosen in the Bio Profile editor:
+
+| Style | Look |
+|---|---|
+| ⬜ **Solid** | Clean white background — the default |
+| 🪟 **Glass** | Frosted glass with blur and transparency |
+| ❄️ **Frost** | Heavier blur with a 60% white overlay |
+| ◻️ **Transparent** | Fully see-through — great over background images |
+
+> **Tip:** Glass, Frost, and Transparent styles look best when you set a **Page Background Image** in the Bio Profile editor.
 
 ### Creating a Custom Page
 1. Go to **Admin → Pages** in the nav bar
@@ -252,7 +266,7 @@ link-platform/
 │   │   │   ├── LinkCard.jsx  # Shows /s/ or /l/ badge
 │   │   │   ├── Toast.jsx
 │   │   │   └── EmptyState.jsx
-│   │   ├── config.js         # shortUrl(), landingUrl(), linkUrl()
+│   │   ├── config.js         # shortUrl(), landingUrl(), linkUrl(), TAB_STYLES
 │   │   ├── api.js            # Axios with auto token refresh
 │   │   └── styles/theme.css  # CSS variables, dark mode
 │   ├── Dockerfile
@@ -275,7 +289,7 @@ link-platform/
 |---|---|
 | `users` | Accounts, bio data, profile settings |
 | `links` | Short links with landing page data |
-| `profile_tabs` | Bio profile tab sections |
+| `profile_tabs` | Bio profile tab sections (with style + bg_url) |
 | `profile_links` | Links inside bio tabs |
 | `social_icons` | Social media icons on profiles |
 | `messages` | Internal messaging system |
@@ -305,6 +319,12 @@ Common cause: npm install still running — wait 30 seconds and refresh.
 - Make sure you're using the correct email and password
 - Emails are **case-insensitive** — `ADMIN@admin.admin` = `admin@admin.admin`
 - Check backend is running: `curl http://localhost:8000/`
+
+### Tab styles showing as plain white
+This was a bug fixed in v10.4. If you're on v10.3, re-run with the new setup script or apply the patch:
+```bash
+wget https://github.com/DanversKara/LinkPlatform/releases/download/v10.4/setup.sh
+```
 
 ### Full reset (wipe everything and start fresh)
 ```bash
