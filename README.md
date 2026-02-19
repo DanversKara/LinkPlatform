@@ -375,3 +375,4 @@ Future Plans
 Emails - send emails for reset accounts, signups, messages, etc
 2FA APP and Backup codes
 Cloudflare Captcha
+Mobile / Desktop / Tablet Universal Layout aka Responsive Design
