@@ -1,5 +1,7 @@
 
-<b>ISSUES TAB:</b> please report all bugs, issues, glitches, hacks, etc, will take time to get back to you. Please do not report issues already reported, post the same issues under someones already open issue, to keep the same issues all in one place.
+<b>ISSUES TAB:</b>
+Please report all bugs, glitches, exploits, or other issues here. We may not respond immediately, so thank you for your patience.
+Before creating a new ticket, check if the issue has already been reported. If it has, add your details to the existing report instead of creating a new one. Keeping the same issue in one ticket helps us track it more easily and fix it faster.
 
 # 🔗 LinkPlatform
 
