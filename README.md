@@ -1,5 +1,5 @@
 
-ISSUES TAB: please report all bugs, issues, glitches, hacks, etc, will take time to get back to you. Please do not report issues already reported, post the same issues under someones already open issue, to keep the same issues all in one place.
+<b>ISSUES TAB:</b> please report all bugs, issues, glitches, hacks, etc, will take time to get back to you. Please do not report issues already reported, post the same issues under someones already open issue, to keep the same issues all in one place.
 
 # 🔗 LinkPlatform
 
