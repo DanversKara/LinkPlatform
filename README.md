@@ -381,3 +381,42 @@ Mobile / Desktop / Tablet Universal Layout aka Responsive Design
 Plans for a Mobile App for Android and iOS (must later down the road)
 Auto Backup and Restore Database for each update. When you run a new install, it will backup the database then restore it, so you dont lose profile, user, link, pages, data.
 - <b>RIGHT NOW YOU NEED TO BACK UP ALL DATABASE BEFORE YOU INSTALL ANY NEW RELEASES</b>
+
+---
+
+If you’re running a bunch of services on different ports, Nginx Proxy Manager is honestly hard to beat.
+
+🔗 Nginx Proxy Manager
+Official site: https://nginxproxymanager.com/
+
+Why it’s so good (especially for homelabs)
+
+🔁 Easy reverse proxy setup (no manual nginx.conf editing)
+
+🔒 Built-in Let’s Encrypt SSL with auto-renew
+
+🌐 Clean web UI instead of CLI configs
+
+🎯 Simple host → IP:port mapping
+
+👥 Basic access control & authentication
+
+📦 Works great with Docker setups
+
+If you're juggling stuff like:
+
+app1 on port 3000
+
+app2 on port 8080
+
+api on port 5000
+
+random dev tools on weird ports
+
+It makes everything accessible via:
+
+app1.yourdomain.com
+app2.yourdomain.com
+api.yourdomain.com
+
+instead of remembering ports.
