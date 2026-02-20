@@ -1,0 +1,19 @@
+⚠️ Upgrading from v10.4
+No database schema changes between v10.4 and v10.5. All fixes are frontend-only.
+
+To patch an existing v10.4 install without a full reset, download and run the standalone patch script:
+
+Run the following commands in your terminal (inside the project directory) to clean up and rebuild
+Stop any running containers
+
+docker compose down -v
+
+
+Clear Docker's build cache
+
+docker builder prune -f
+
+
+Re-run the setup script
+
+./setup.sh
