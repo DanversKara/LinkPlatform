@@ -383,6 +383,157 @@ MIT — do whatever you want with it.
 
 ---
 
+## 📸 Screenshots
+
+<style>
+.screenshot-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.screenshot-thumbnail {
+  cursor: pointer;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+  aspect-ratio: 16/9;
+}
+
+.screenshot-thumbnail:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+}
+
+.screenshot-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Modal/Lightbox Styles */
+.screenshot-modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.9);
+  animation: fadeIn 0.3s;
+}
+
+.screenshot-modal.active {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.screenshot-modal img {
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.5);
+}
+
+.screenshot-modal-close {
+  position: absolute;
+  top: 20px;
+  right: 40px;
+  color: white;
+  font-size: 40px;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 1001;
+  transition: color 0.2s;
+}
+
+.screenshot-modal-close:hover {
+  color: #6366f1;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+</style>
+
+<div class="screenshot-gallery">
+  <div class="screenshot-thumbnail" onclick="openModal(this)">
+    <img src="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/0.png" alt="Screenshot 1">
+  </div>
+  <div class="screenshot-thumbnail" onclick="openModal(this)">
+    <img src="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/1.png" alt="Screenshot 2">
+  </div>
+  <div class="screenshot-thumbnail" onclick="openModal(this)">
+    <img src="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/11.png" alt="Screenshot 3">
+  </div>
+  <div class="screenshot-thumbnail" onclick="openModal(this)">
+    <img src="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/2.png" alt="Screenshot 4">
+  </div>
+  <div class="screenshot-thumbnail" onclick="openModal(this)">
+    <img src="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/3.png" alt="Screenshot 5">
+  </div>
+  <div class="screenshot-thumbnail" onclick="openModal(this)">
+    <img src="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/4.png" alt="Screenshot 6">
+  </div>
+  <div class="screenshot-thumbnail" onclick="openModal(this)">
+    <img src="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/5.png" alt="Screenshot 7">
+  </div>
+  <div class="screenshot-thumbnail" onclick="openModal(this)">
+    <img src="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/6.png" alt="Screenshot 8">
+  </div>
+  <div class="screenshot-thumbnail" onclick="openModal(this)">
+    <img src="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/7.png" alt="Screenshot 9">
+  </div>
+  <div class="screenshot-thumbnail" onclick="openModal(this)">
+    <img src="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/8.png" alt="Screenshot 10">
+  </div>
+  <div class="screenshot-thumbnail" onclick="openModal(this)">
+    <img src="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/9.png" alt="Screenshot 11">
+  </div>
+</div>
+
+<!-- Modal for enlarged images -->
+<div id="screenshotModal" class="screenshot-modal" onclick="closeModal()">
+  <span class="screenshot-modal-close">&times;</span>
+  <img id="modalImage" src="" alt="Enlarged screenshot">
+</div>
+
+<script>
+function openModal(element) {
+  const modal = document.getElementById('screenshotModal');
+  const modalImg = document.getElementById('modalImage');
+  const img = element.querySelector('img');
+  
+  modalImg.src = img.src;
+  modalImg.alt = img.alt;
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  const modal = document.getElementById('screenshotModal');
+  modal.classList.remove('active');
+  document.body.style.overflow = 'auto';
+}
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(event) {
+  if (event.key === 'Escape') {
+    closeModal();
+  }
+});
+</script>
+
+---
+
 If you’re running a bunch of services on different ports, Nginx Proxy Manager is honestly hard to beat.
 
 🔗 Nginx Proxy Manager
