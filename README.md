@@ -383,22 +383,10 @@ MIT — do whatever you want with it.
 
 ---
 
-<details open>
-<summary><strong>📸 Click to expand screenshots</strong></summary>
+## 📸 Screenshots
 
-<div align="center">
-
-<a href="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/0.png" target="_blank">
-  <img src="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/0.png" width="180" style="margin:4px; border-radius:6px; border:1px solid #ddd">
-</a>
-<a href="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/1.png" target="_blank">
-  <img src="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/1.png" width="180" style="margin:4px; border-radius:6px; border:1px solid #ddd">
-</a>
-<!-- repeat for all images -->
-
-</div>
-</details>
-
+[🖼️ Open Interactive Gallery](https://danverskara.github.io/LinkPlatform/gallery.html)  
+*Click thumbnails for fullscreen lightbox with keyboard navigation, swipe support, and smooth animations*
 ---
 
 If you’re running a bunch of services on different ports, Nginx Proxy Manager is honestly hard to beat.
