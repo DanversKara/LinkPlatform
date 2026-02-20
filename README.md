@@ -383,6 +383,13 @@ MIT — do whatever you want with it.
 
 ---
 
+## 📸 Screenshots
+
+[🖼️ Open Interactive Gallery](https://raw.githack.com/DanversKara/LinkPlatform/main/gallery.html)  
+*Click thumbnails for fullscreen lightbox with keyboard navigation and smooth animations*
+
+---
+
 If you’re running a bunch of services on different ports, Nginx Proxy Manager is honestly hard to beat.
 
 🔗 Nginx Proxy Manager
