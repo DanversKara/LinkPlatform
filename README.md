@@ -385,7 +385,7 @@ MIT — do whatever you want with it.
 
 ## 📸 Screenshots
 
-[🖼️ Open Interactive Gallery](https://raw.githack.com/DanversKara/LinkPlatform/main/gallery.html)  
+[🖼️ Open Interactive Gallery](https://rawcdn.githack.com/DanversKara/LinkPlatform/6055b9b08117ce036cb0f44a79bc3c6f9fb226dc/images/gallery-html/gallery.html)  
 *Click thumbnails for fullscreen lightbox with keyboard navigation and smooth animations*
 
 ---
