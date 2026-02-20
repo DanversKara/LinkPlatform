@@ -385,46 +385,14 @@ MIT — do whatever you want with it.
 
 ## 📸 Screenshots
 
-<div align="center">
-  <a href="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/0.png" target="_blank">
-    <img src="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/0.png" width="200" alt="Screenshot 1" style="margin:5px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1)">
-  </a>
-  <a href="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/1.png" target="_blank">
-    <img src="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/1.png" width="200" alt="Screenshot 2" style="margin:5px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1)">
-  </a>
-  <a href="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/11.png" target="_blank">
-    <img src="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/11.png" width="200" alt="Screenshot 3" style="margin:5px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1)">
-  </a>
-  <a href="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/2.png" target="_blank">
-    <img src="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/2.png" width="200" alt="Screenshot 4" style="margin:5px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1)">
-  </a>
-  <a href="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/3.png" target="_blank">
-    <img src="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/3.png" width="200" alt="Screenshot 5" style="margin:5px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1)">
-  </a>
-  <a href="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/4.png" target="_blank">
-    <img src="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/4.png" width="200" alt="Screenshot 6" style="margin:5px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1)">
-  </a>
-</div>
+| | | |
+|-|-|-|
+| [![0](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/0.png)](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/0.png) | [![1](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/1.png)](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/1.png) | [![11](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/11.png)](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/11.png) |
+| [![2](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/2.png)](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/2.png) | [![3](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/3.png)](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/3.png) | [![4](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/4.png)](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/4.png) |
+| [![5](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/5.png)](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/5.png) | [![6](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/6.png)](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/6.png) | [![7](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/7.png)](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/7.png) |
+| [![8](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/8.png)](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/8.png) | [![9](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/9.png)](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/9.png) | |
 
-<div align="center">
-  <a href="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/5.png" target="_blank">
-    <img src="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/5.png" width="200" alt="Screenshot 7" style="margin:5px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1)">
-  </a>
-  <a href="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/6.png" target="_blank">
-    <img src="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/6.png" width="200" alt="Screenshot 8" style="margin:5px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1)">
-  </a>
-  <a href="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/7.png" target="_blank">
-    <img src="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/7.png" width="200" alt="Screenshot 9" style="margin:5px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1)">
-  </a>
-  <a href="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/8.png" target="_blank">
-    <img src="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/8.png" width="200" alt="Screenshot 10" style="margin:5px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1)">
-  </a>
-  <a href="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/9.png" target="_blank">
-    <img src="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/9.png" width="200" alt="Screenshot 11" style="margin:5px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1)">
-  </a>
-</div>
-
-<p align="center"><em>💡 Click any image to view full size</em></p>
+> 💡 **Click any thumbnail** → GitHub opens a full-screen viewer with zoom & pan!
 
 ---
 
