@@ -383,16 +383,21 @@ MIT — do whatever you want with it.
 
 ---
 
-## 📸 Screenshots
+<details open>
+<summary><strong>📸 Click to expand screenshots</strong></summary>
 
-| | | |
-|-|-|-|
-| [![0](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/0.png)](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/0.png) | [![1](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/1.png)](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/1.png) | [![11](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/11.png)](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/11.png) |
-| [![2](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/2.png)](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/2.png) | [![3](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/3.png)](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/3.png) | [![4](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/4.png)](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/4.png) |
-| [![5](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/5.png)](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/5.png) | [![6](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/6.png)](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/6.png) | [![7](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/7.png)](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/7.png) |
-| [![8](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/8.png)](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/8.png) | [![9](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/9.png)](https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/9.png) | |
+<div align="center">
 
-> 💡 **Click any thumbnail** → GitHub opens a full-screen viewer with zoom & pan!
+<a href="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/0.png" target="_blank">
+  <img src="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/0.png" width="180" style="margin:4px; border-radius:6px; border:1px solid #ddd">
+</a>
+<a href="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/1.png" target="_blank">
+  <img src="https://raw.githubusercontent.com/DanversKara/LinkPlatform/refs/heads/main/10.4/1.png" width="180" style="margin:4px; border-radius:6px; border:1px solid #ddd">
+</a>
+<!-- repeat for all images -->
+
+</div>
+</details>
 
 ---
 
