@@ -1,6 +1,6 @@
 # 🔗 LinkPlatform
 **Shorten URLs · QR Codes · Bio Profiles · Custom Pages · Docker · WSL**  
-**Version 11.0.0**
+**This ReadMe.md is based off Version 11.0.0**
 
 A self-hosted, all-in-one link management platform. One script creates everything — the database, backend API, and frontend — all running in Docker.
 
