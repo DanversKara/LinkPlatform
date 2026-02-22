@@ -302,11 +302,8 @@ MIT — do whatever you want with it.
 Built with **FastAPI · React · TypeScript · PostgreSQL · Docker**
 
 ## Future Plans
-- **Emails** - send emails for reset accounts, signups, messages, etc (Schema Ready)
-- **2FA App** - UI implementation for existing DB fields
-- **Cloudflare Captcha**
-- **Mobile / Desktop / Tablet Universal Layout** aka Responsive Design
-- **Plans for a Mobile App** for Android and iOS (much later down the road)
+- **Future will have cloudflare captcha just not now keeps breaking the login...**
+- - **Plans for a Mobile App** for Android and iOS (much later down the road)
 - **Auto Backup and Restore Database** for each update. When you run a new install, it will backup the database then restore it, so you dont lose profile, user, link, pages, data. **RIGHT NOW YOU NEED TO BACK UP ALL DATABASE BEFORE YOU INSTALL ANY NEW RELEASES**
 - The end goal is to also port it over to **Cloudflare Workers & Pages**, i did test it, i got it almost working but kept getting a Login Failed Unknown, but once i solve that issue (if you know how) then it will be ready for hosting there, so users can use this code almost anywhere outside docker.
 
