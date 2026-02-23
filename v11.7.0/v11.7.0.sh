@@ -9,7 +9,7 @@ SITE_NAME="LinkPlatform"
 SITE_EMOJI="🔗"
 SITE_TAGLINE="Shorten, track, and manage your links. Create beautiful bio profiles."
 SITE_FOOTER="© 2026 ${SITE_NAME}. All rights reserved."
-SITE_VERSION="11.6.0"
+SITE_VERSION="11.7.0"  # Updated version
 
 BACKEND_PORT=8000
 FRONTEND_PORT=3000
@@ -66,17 +66,14 @@ if [ -d "$PROJECT_DIR" ]; then
   mkdir -p "$BACKUP_DIR"
   BACKUP_FILE="$BACKUP_DIR/backup-$(date +%Y%m%d-%H%M%S).sql"
 
-  # Ensure the old containers are running to access the database
   cd "$PROJECT_DIR"
   $DOCKER_COMPOSE up -d db 2>/dev/null || true
   echo "⏳ Waiting for database to be ready..."
   sleep 10
 
-  # Perform pg_dump
   docker exec $(docker ps -qf "name=db") pg_dump -U user linkplatform > "$BACKUP_FILE"
   echo "✅ Database backed up to $BACKUP_FILE"
 
-  # Stop all containers (they will be recreated)
   $DOCKER_COMPOSE down
   cd "$HOME"
 else
@@ -151,7 +148,7 @@ SMTP_PASSWORD=${SMTP_PASSWORD}
 SMTP_USE_TLS=${SMTP_USE_TLS}
 EOF
 
-# ---------- config.py (now reads SMTP from DB via SiteConfig, with fallback to env) ----------
+# ---------- config.py ----------
 cat > backend/app/config.py << 'EOF'
 from pydantic_settings import BaseSettings
 from typing import Optional
@@ -167,7 +164,6 @@ class Settings(BaseSettings):
     SITE_NAME: str = "LinkPlatform"
     ADMIN_EMAIL: str = "admin@admin.admin"
     ADMIN_PASSWORD: str = "admin"
-    # SMTP defaults (will be overridden by DB if present)
     SMTP_HOST: str = "localhost"
     SMTP_PORT: int = 25
     SMTP_USER: str = ""
@@ -200,7 +196,7 @@ def get_db():
         db.close()
 EOF
 
-# ---------- models.py (added accept_messages, and we already have all fields) ----------
+# ---------- models.py ----------
 cat > backend/app/models.py << 'EOF'
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text, func
 from sqlalchemy.orm import relationship
@@ -622,7 +618,6 @@ class SiteConfigOut(BaseModel):
 class SiteConfigUpdate(BaseModel):
     value: str
 
-# SMTP settings (multiple keys)
 class SMTPSettings(BaseModel):
     host: str
     port: int
@@ -823,7 +818,7 @@ async def get_current_moderator_user(current_user=Depends(get_current_active_use
     return current_user
 EOF
 
-# ---------- email_utils.py (now reads SMTP settings from DB) ----------
+# ---------- email_utils.py ----------
 cat > backend/app/email_utils.py << 'EOF'
 import smtplib
 from email.mime.text import MIMEText
@@ -890,7 +885,7 @@ def send_templated_email(db: Session, key: str, to_email: str, context: dict):
     send_email_raw(to_email, subject, text, html, smtp)
 EOF
 
-# ---------- routers/auth.py (unchanged) ----------
+# ---------- routers/auth.py ----------
 cat > backend/app/routers/auth.py << 'EOF'
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from fastapi.security import OAuth2PasswordRequestForm
@@ -1056,7 +1051,7 @@ def reset_password(data: schemas.ResetPassword, db: Session = Depends(get_db)):
     return {"ok": True, "message": "Password updated successfully"}
 EOF
 
-# ---------- routers/profile.py (unchanged) ----------
+# ---------- routers/profile.py ----------
 cat > backend/app/routers/profile.py << 'PROFILE_EOF'
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
@@ -1325,7 +1320,7 @@ def delete_link(link_id: int, db: Session = Depends(get_db), current_user=Depend
     return {"ok": True}
 LINKS_EOF
 
-# ---------- routers/messages.py (updated with slug lookup) ----------
+# ---------- routers/messages.py (updated with deleteMessage support) ----------
 cat > backend/app/routers/messages.py << 'MESSAGES_EOF'
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -1568,7 +1563,7 @@ def get_user_by_slug(slug: str, db: Session = Depends(get_db), current_user=Depe
     return {"id": user.id, "email": user.email, "custom_slug": user.custom_slug, "accept_messages": user.accept_messages}
 USERS_EOF
 
-# ---------- routers/admin.py (added SMTP endpoints) ----------
+# ---------- routers/admin.py ----------
 cat > backend/app/routers/admin.py << 'ADMIN_EOF'
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -1735,7 +1730,6 @@ def get_smtp_settings_route(db: Session = Depends(get_db), admin=Depends(auth.ge
 
 @router.put("/smtp-settings")
 def update_smtp_settings(settings: schemas.SMTPSettings, db: Session = Depends(get_db), admin=Depends(auth.get_current_admin_user)):
-    # Store each setting as a separate SiteConfig entry
     def set_config(key, value):
         config = db.query(models.SiteConfig).filter(models.SiteConfig.key == key).first()
         if config:
@@ -2107,9 +2101,323 @@ def reset_2fa(reset: schemas.TwoFAReset, current_user=Depends(auth.get_current_a
     return {"ok": True}
 TWOFA_EOF
 
-# ---------- Templates: public_profile.html, landing.html, page.html (unchanged) ----------
-# (We omit them here for brevity; they are identical to previous versions)
-# In the actual script, they would be included as before.
+# ---------- Templates: public_profile.html ----------
+cat > backend/app/templates/public_profile.html << 'EOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ profile.header_text or config.SITE_NAME }}'s Profile</title>
+    <style>
+        :root {
+            --theme-color: {{ profile.theme_color or '#6366f1' }};
+            --bg: {% if profile.page_bg_url %}url({{ profile.page_bg_url }}){% else %}#f8fafc{% endif %};
+            --surface: rgba(255,255,255,0.9);
+        }
+        [data-theme="dark"] {
+            --bg: {% if profile.page_bg_url %}url({{ profile.page_bg_url }}){% else %}#0f172a{% endif %};
+            --surface: rgba(30,41,59,0.9);
+        }
+        body {
+            margin: 0;
+            font-family: system-ui, sans-serif;
+            background: var(--bg) center/cover fixed;
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .profile-card {
+            max-width: 800px;
+            width: 100%;
+            background: var(--surface);
+            backdrop-filter: blur(10px);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .profile-header {
+            display: flex;
+            flex-direction: column;
+            align-items: {% if profile.profile_layout == 'left' %}flex-start{% elif profile.profile_layout == 'right' %}flex-end{% else %}center{% endif %};
+            margin-bottom: 1.5rem;
+        }
+        .profile-photo {
+            width: 120px;
+            height: 120px;
+            border-radius: {% if profile.profile_photo_style == 'circle' %}50%{% elif profile.profile_photo_style == 'rounded' %}20%{% else %}0{% endif %};
+            object-fit: cover;
+            border: 4px solid var(--theme-color);
+            margin-bottom: 1rem;
+        }
+        .profile-photo.pulse { animation: pulse 2s infinite; }
+        .profile-photo.glow { box-shadow: 0 0 20px var(--theme-color); }
+        .profile-photo.rainbow { border-image: linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet) 1; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        .status-bubble {
+            display: inline-block;
+            background: var(--theme-color);
+            color: white;
+            padding: 0.2rem 0.8rem;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+        }
+        .social-icons {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+        }
+        .social-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            transition: transform 0.2s;
+        }
+        .social-icon:hover { transform: scale(1.1); }
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            border-bottom: 2px solid var(--border);
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+        .tab-button {
+            background: transparent;
+            border: none;
+            padding: 0.75rem 1.25rem;
+            cursor: pointer;
+            font-size: 1rem;
+            border-radius: var(--radius) var(--radius) 0 0;
+            transition: 0.2s;
+            color: var(--text-muted);
+        }
+        .tab-button.active {
+            background: var(--surface2);
+            color: var(--theme-color);
+            border-bottom: 2px solid var(--theme-color);
+        }
+        .tab-content { padding: 1.5rem 0; }
+        .link-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem;
+            background: var(--surface2);
+            border-radius: 0.75rem;
+            margin-bottom: 0.5rem;
+            text-decoration: none;
+            color: inherit;
+            transition: 0.2s;
+        }
+        .link-item:hover { background: var(--border); }
+        .link-thumb {
+            width: 50px;
+            height: 50px;
+            border-radius: 0.5rem;
+            object-fit: cover;
+        }
+        .footer {
+            margin-top: 2rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+    </style>
+    {% if profile.theme_html %}{{ profile.theme_html | safe }}{% endif %}
+</head>
+<body>
+    <div class="profile-card">
+        <div class="profile-header">
+            {% if profile.profile_photo_url %}
+                <img src="{{ profile.profile_photo_url }}" alt="Profile" class="profile-photo {{ profile.profile_photo_style }}">
+            {% endif %}
+            {% if profile.daily_status %}
+                <div class="status-bubble">{{ profile.daily_status }}</div>
+            {% endif %}
+            {% if profile.header_text %}
+                <h1>{{ profile.header_text }}</h1>
+            {% endif %}
+            {% if profile.sub_header_text %}
+                <h3 style="color: var(--text-muted);">{{ profile.sub_header_text }}</h3>
+            {% endif %}
+        </div>
+
+        {% if profile.show_social_icons and social_icons %}
+            <div class="social-icons">
+                {% for icon in social_icons %}
+                    <a href="{{ icon.url }}" target="_blank" rel="noopener">
+                        {% if icon.icon_url %}
+                            <img src="{{ icon.icon_url }}" alt="{{ icon.platform }}" class="social-icon">
+                        {% else %}
+                            <span style="font-size: 2rem;">🔗</span>
+                        {% endif %}
+                    </a>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="bio">{{ profile.bio_description }}</div>
+
+        {% if tabs %}
+            <div class="tabs">
+                {% for tab in tabs %}
+                    <button class="tab-button {% if loop.first %}active{% endif %}" data-tab="{{ tab.id }}">{{ tab.title }}</button>
+                {% endfor %}
+            </div>
+            <div class="tab-content">
+                {% for tab in tabs %}
+                    <div class="tab-pane {% if loop.first %}active{% endif %}" id="tab-{{ tab.id }}" style="display: {% if loop.first %}block{% else %}none{% endif %};">
+                        {% if tab.text_content %}
+                            <div class="tab-text">{{ tab.text_content }}</div>
+                        {% endif %}
+                        {% for link in tab.links %}
+                            <a href="{{ link.url }}" class="link-item" target="_blank" rel="noopener">
+                                {% if link.thumbnail_url %}
+                                    <img src="{{ link.thumbnail_url }}" class="link-thumb" alt="">
+                                {% else %}
+                                    <span style="font-size: 2rem;">🔗</span>
+                                {% endif %}
+                                <div>
+                                    <strong>{{ link.title }}</strong>
+                                    {% if link.description %}
+                                        <p style="font-size: 0.8rem;">{{ link.description }}</p>
+                                    {% endif %}
+                                </div>
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="footer">
+            <a href="/report?slug={{ profile.custom_slug }}" style="color: var(--text-muted); text-decoration: none;">🚩 Report</a>
+        </div>
+    </div>
+
+    <script>
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-pane').forEach(p => p.style.display = 'none');
+                btn.classList.add('active');
+                const tabId = btn.dataset.tab;
+                document.getElementById('tab-' + tabId).style.display = 'block';
+            });
+        });
+    </script>
+</body>
+</html>
+EOF
+
+# ---------- Templates: landing.html ----------
+cat > backend/app/templates/landing.html << 'EOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ link.landing_page_title or 'Redirecting...' }}</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            background: #f8fafc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 1rem;
+        }
+        .landing {
+            max-width: 600px;
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .btn {
+            background: var(--theme-color, #6366f1);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 1rem;
+        }
+        .theme-{{ link.landing_page_theme }} {
+            /* theme styles can be added here */
+        }
+    </style>
+</head>
+<body>
+    <div class="landing theme-{{ link.landing_page_theme }}">
+        <h1>{{ link.landing_page_title or 'You are being redirected' }}</h1>
+        <p>{{ link.landing_page_body or '' }}</p>
+        {% if link.landing_page_image %}
+            <img src="{{ link.landing_page_image }}" alt="" style="max-width: 100%; border-radius: 0.5rem; margin: 1rem 0;">
+        {% endif %}
+        <a href="{{ link.original_url }}" class="btn">Continue to destination</a>
+        <p style="font-size: 0.8rem; margin-top: 1rem;">You will be redirected in 10 seconds...</p>
+    </div>
+    <script>
+        setTimeout(() => { window.location.href = "{{ link.original_url }}"; }, 10000);
+    </script>
+</body>
+</html>
+EOF
+
+# ---------- Templates: page.html ----------
+cat > backend/app/templates/page.html << 'EOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page.title }} - {{ config.SITE_NAME }}</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            background: #f8fafc;
+            margin: 0;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .footer {
+            margin-top: 2rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>{{ page.title }}</h1>
+        <div>{{ page.content | safe }}</div>
+        <div class="footer">
+            <a href="/">← Back to Home</a>
+        </div>
+    </div>
+</body>
+</html>
+EOF
 
 # ---------- main.py (with migrations) ----------
 cat > backend/app/main.py << 'MAIN_EOF'
@@ -2299,7 +2607,7 @@ seed_defaults()
 
 templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "templates"))
 
-app = FastAPI(title=settings.SITE_NAME, version="11.6.0")
+app = FastAPI(title=settings.SITE_NAME, version="11.7.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
 uploads_path = os.path.join(os.path.dirname(__file__), "uploads")
@@ -2317,7 +2625,7 @@ def api_root():
 
 @app.get("/")
 def root():
-    return {"message": f"{settings.SITE_NAME} API v11.6.0", "docs": "/docs"}
+    return {"message": f"{settings.SITE_NAME} API v11.7.0", "docs": "/docs"}
 
 @app.get("/s/{short_code}")
 async def handle_short_redirect(short_code: str, db: Session = Depends(get_db)):
@@ -2341,17 +2649,16 @@ async def handle_landing_page(request: Request, short_code: str, db: Session = D
 MAIN_EOF
 
 # ============================================================================
-# FRONTEND (only the new AdminSmtp page; others unchanged)
-# We'll include a new file: frontend/src/pages/AdminSmtp.jsx
+# FRONTEND
 # ============================================================================
-echo "🎨 Creating frontend (including new SMTP admin page)..."
+echo "🎨 Creating frontend..."
 
-# ---------- frontend/package.json (unchanged) ----------
+# ---------- frontend/package.json ----------
 cat > frontend/package.json << 'EOF'
-{"name":"link-platform","version":"11.6.0","type":"module","scripts":{"dev":"vite","build":"vite build","preview":"vite preview"},"dependencies":{"react":"^18.2.0","react-dom":"^18.2.0","react-router-dom":"^6.20.0","axios":"^1.6.0","qrcode.react":"^3.1.0"},"devDependencies":{"@vitejs/plugin-react":"^4.1.0","vite":"^4.5.0"}}
+{"name":"link-platform","version":"11.7.0","type":"module","scripts":{"dev":"vite","build":"vite build","preview":"vite preview"},"dependencies":{"react":"^18.2.0","react-dom":"^18.2.0","react-router-dom":"^6.20.0","axios":"^1.6.0","qrcode.react":"^3.1.0"},"devDependencies":{"@vitejs/plugin-react":"^4.1.0","vite":"^4.5.0"}}
 EOF
 
-# ---------- frontend/Dockerfile (unchanged) ----------
+# ---------- frontend/Dockerfile ----------
 cat > frontend/Dockerfile << 'EOF'
 FROM node:18-alpine
 WORKDIR /app
@@ -2362,7 +2669,7 @@ EXPOSE 3000
 CMD ["npm","run","dev","--","--host","0.0.0.0","--port","3000"]
 EOF
 
-# ---------- frontend/vite.config.js (unchanged) ----------
+# ---------- frontend/vite.config.js ----------
 cat > frontend/vite.config.js << 'EOF'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
@@ -2388,7 +2695,7 @@ import './styles/theme.css'
 ReactDOM.createRoot(document.getElementById('root')).render(<React.StrictMode><App /></React.StrictMode>)
 EOF
 
-# ---------- frontend/src/styles/theme.css (unchanged) ----------
+# ---------- frontend/src/styles/theme.css ----------
 cat > frontend/src/styles/theme.css << 'EOF'
 :root {
   --primary:#6366f1; --primary-hover:#4f46e5;
@@ -2508,7 +2815,7 @@ table { width: 100%; border-collapse: collapse; min-width: 600px; }
 }
 EOF
 
-# ---------- frontend/src/config.js (unchanged) ----------
+# ---------- frontend/src/config.js ----------
 cat > frontend/src/config.js << 'EOF'
 export const SITE_NAME    = "LinkPlatform"
 export const SITE_EMOJI   = "🔗"
@@ -2553,7 +2860,7 @@ export const LANDING_THEMES = [
 ]
 EOF
 
-# ---------- frontend/src/useSiteConfig.js (unchanged) ----------
+# ---------- frontend/src/useSiteConfig.js ----------
 cat > frontend/src/useSiteConfig.js << 'EOF'
 import { useState, useEffect } from 'react'
 import { SITE_NAME, SITE_TAGLINE, SITE_FOOTER, SITE_EMOJI, API_BASE_URL } from './config'
@@ -2575,7 +2882,7 @@ return config
 }
 EOF
 
-# ---------- frontend/src/useNavItems.js (unchanged) ----------
+# ---------- frontend/src/useNavItems.js ----------
 cat > frontend/src/useNavItems.js << 'EOF'
 import { useState, useEffect } from 'react'
 import api from './api'
@@ -2588,7 +2895,7 @@ return { items }
 }
 EOF
 
-# ---------- frontend/src/context/ThemeContext.jsx (unchanged) ----------
+# ---------- frontend/src/context/ThemeContext.jsx ----------
 cat > frontend/src/context/ThemeContext.jsx << 'EOF'
 import { createContext, useContext, useState, useEffect } from 'react'
 const ThemeContext = createContext({ theme:'dark', toggle:()=>{} })
@@ -2607,7 +2914,7 @@ return <ThemeContext.Provider value={{ theme, toggle }}>{children}</ThemeContext
 export const useTheme = () => useContext(ThemeContext)
 EOF
 
-# ---------- frontend/src/context/AuthContext.jsx (unchanged) ----------
+# ---------- frontend/src/context/AuthContext.jsx ----------
 cat > frontend/src/context/AuthContext.jsx << 'EOF'
 import React, { createContext, useState, useContext, useEffect } from 'react'
 import api from '../api'
@@ -2686,7 +2993,7 @@ export function AuthProvider({ children }) {
 export const useAuth = () => useContext(AuthContext)
 EOF
 
-# ---------- frontend/src/api.js (unchanged) ----------
+# ---------- frontend/src/api.js ----------
 cat > frontend/src/api.js << 'EOF'
 import axios from 'axios'
 import { API_BASE_URL } from './config'
@@ -2722,7 +3029,7 @@ api.interceptors.response.use(r => r, async e => {
 export default api
 EOF
 
-# ---------- frontend/src/components/Navbar.jsx (unchanged) ----------
+# ---------- frontend/src/components/Navbar.jsx ----------
 cat > frontend/src/components/Navbar.jsx << 'EOF'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useState, useEffect, useCallback } from 'react'
@@ -2809,7 +3116,7 @@ return (
 }
 EOF
 
-# ---------- frontend/src/components/Toast.jsx (unchanged) ----------
+# ---------- frontend/src/components/Toast.jsx ----------
 cat > frontend/src/components/Toast.jsx << 'EOF'
 import { useEffect, useState } from 'react'
 export default function Toast({ message, type='success', duration=3500, onClose }) {
@@ -2820,7 +3127,7 @@ return <div className={`toast ${type}`}>{type==='success'?'✅':'❌'} {message}
 }
 EOF
 
-# ---------- frontend/src/components/EmptyState.jsx (unchanged) ----------
+# ---------- frontend/src/components/EmptyState.jsx ----------
 cat > frontend/src/components/EmptyState.jsx << 'EOF'
 import { Link } from 'react-router-dom'
 export default function EmptyState({title,description,action,to,icon="🔗"}) {
@@ -2828,7 +3135,7 @@ return <div className="empty glass"><div className="empty-icon">{icon}</div><h3>
 }
 EOF
 
-# ---------- frontend/src/components/LinkCard.jsx (unchanged) ----------
+# ---------- frontend/src/components/LinkCard.jsx ----------
 cat > frontend/src/components/LinkCard.jsx << 'EOF'
 import { useState } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
@@ -2869,7 +3176,7 @@ return (
 }
 EOF
 
-# ---------- frontend/src/pages/Home.jsx (unchanged) ----------
+# ---------- frontend/src/pages/Home.jsx ----------
 cat > frontend/src/pages/Home.jsx << 'EOF'
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
@@ -2894,7 +3201,7 @@ return (
 }
 EOF
 
-# ---------- frontend/src/pages/Login.jsx (unchanged) ----------
+# ---------- frontend/src/pages/Login.jsx ----------
 cat > frontend/src/pages/Login.jsx << 'EOF'
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
@@ -3007,7 +3314,7 @@ export default function Login() {
 }
 EOF
 
-# ---------- frontend/src/pages/Signup.jsx (unchanged) ----------
+# ---------- frontend/src/pages/Signup.jsx ----------
 cat > frontend/src/pages/Signup.jsx << 'EOF'
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
@@ -3021,7 +3328,7 @@ return <div><Navbar/><div style={{maxWidth:400,margin:'4rem auto',padding:'2rem'
 }
 EOF
 
-# ---------- frontend/src/pages/ForgotPassword.jsx (unchanged) ----------
+# ---------- frontend/src/pages/ForgotPassword.jsx ----------
 cat > frontend/src/pages/ForgotPassword.jsx << 'EOF'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -3098,7 +3405,7 @@ export default function ForgotPassword() {
 }
 EOF
 
-# ---------- frontend/src/pages/ResetPassword.jsx (unchanged) ----------
+# ---------- frontend/src/pages/ResetPassword.jsx ----------
 cat > frontend/src/pages/ResetPassword.jsx << 'EOF'
 import { useState } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
@@ -3203,7 +3510,7 @@ export default function ResetPassword() {
 }
 EOF
 
-# ---------- frontend/src/pages/Dashboard.jsx (unchanged) ----------
+# ---------- frontend/src/pages/Dashboard.jsx ----------
 cat > frontend/src/pages/Dashboard.jsx << 'EOF'
 import {useEffect,useState,useCallback} from 'react'; import {Link} from 'react-router-dom'; import api from '../api'; import Navbar from '../components/Navbar'; import EmptyState from '../components/EmptyState'; import LinkCard from '../components/LinkCard'; import Toast from '../components/Toast'
 export default function Dashboard() {
@@ -3216,7 +3523,7 @@ return <div><Navbar/><main style={{padding:'2rem',maxWidth:1000,margin:'0 auto'}
 }
 EOF
 
-# ---------- frontend/src/pages/Create.jsx (unchanged) ----------
+# ---------- frontend/src/pages/Create.jsx ----------
 cat > frontend/src/pages/Create.jsx << 'EOF'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -3238,7 +3545,7 @@ return (<div><Navbar/><main style={{padding:'2rem',maxWidth:600,margin:'0 auto'}
 }
 EOF
 
-# ---------- frontend/src/pages/EditLink.jsx (unchanged) ----------
+# ---------- frontend/src/pages/EditLink.jsx ----------
 cat > frontend/src/pages/EditLink.jsx << 'EOF'
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -3263,7 +3570,7 @@ return (<div><Navbar/><main style={{padding:'2rem',maxWidth:600,margin:'0 auto'}
 }
 EOF
 
-# ---------- frontend/src/pages/MyAccount.jsx (unchanged) ----------
+# ---------- frontend/src/pages/MyAccount.jsx ----------
 cat > frontend/src/pages/MyAccount.jsx << 'EOF'
 import { useState, useEffect } from 'react'
 import api from '../api'
@@ -3353,7 +3660,7 @@ export default function MyAccount() {
 }
 EOF
 
-# ---------- frontend/src/pages/BioProfile.jsx (unchanged, preview link fixed) ----------
+# ---------- frontend/src/pages/BioProfile.jsx ----------
 cat > frontend/src/pages/BioProfile.jsx << 'JSXEOF'
 import { useState, useEffect } from 'react'
 import api from '../api'
@@ -3843,7 +4150,7 @@ export default function BioProfile() {
 }
 JSXEOF
 
-# ---------- frontend/src/pages/Messages.jsx (unchanged) ----------
+# ---------- frontend/src/pages/Messages.jsx (FIXED: added deleteMessage) ----------
 cat > frontend/src/pages/Messages.jsx << 'EOF'
 import { useState, useEffect, useCallback } from 'react'
 import api from '../api'
@@ -3952,6 +4259,19 @@ export default function Messages() {
     }
   }
 
+  // FIX: added deleteMessage function
+  const deleteMessage = async (id) => {
+    if (!confirm('Delete this message?')) return;
+    try {
+      await api.delete(`/api/messages/${id}`);
+      setToast({ message: 'Message deleted', type: 'success' });
+      // Refresh the current list
+      fetchMessages();
+    } catch (err) {
+      setToast({ message: err.response?.data?.detail || 'Delete failed', type: 'error' });
+    }
+  };
+
   return (
     <div>
       <Navbar />
@@ -4009,7 +4329,7 @@ export default function Messages() {
 }
 EOF
 
-# ---------- frontend/src/pages/TwoFA.jsx (unchanged) ----------
+# ---------- frontend/src/pages/TwoFA.jsx ----------
 cat > frontend/src/pages/TwoFA.jsx << 'EOF'
 import { useState, useEffect } from 'react'
 import api from '../api'
@@ -4303,7 +4623,7 @@ export default function Admin() {
     ['nav', '🧭 Navigation'],
     ['pages', '📄 Pages'],
     ['email-templates', '📧 Email Templates'],
-    ['smtp', '📨 SMTP']   // New tab
+    ['smtp', '📨 SMTP']
   ]
 
   return (
@@ -4469,7 +4789,7 @@ export default function Admin() {
 }
 EOF
 
-# ---------- frontend/src/pages/AdminSmtp.jsx (new) ----------
+# ---------- frontend/src/pages/AdminSmtp.jsx ----------
 cat > frontend/src/pages/AdminSmtp.jsx << 'EOF'
 import { useState, useEffect } from 'react'
 import api from '../api'
@@ -4618,7 +4938,7 @@ export default function AdminSmtp() {
 }
 EOF
 
-# ---------- frontend/src/pages/AdminEmailTemplates.jsx (unchanged) ----------
+# ---------- frontend/src/pages/AdminEmailTemplates.jsx ----------
 cat > frontend/src/pages/AdminEmailTemplates.jsx << 'EOF'
 import { useState, useEffect } from 'react'
 import api from '../api'
@@ -4769,7 +5089,7 @@ export default function AdminEmailTemplates() {
 }
 EOF
 
-# ---------- frontend/src/pages/AdminNav.jsx (unchanged) ----------
+# ---------- frontend/src/pages/AdminNav.jsx ----------
 cat > frontend/src/pages/AdminNav.jsx << 'EOF'
 import { useState, useEffect } from 'react'
 import api from '../api'
@@ -4934,7 +5254,7 @@ export default function AdminNav() {
 }
 EOF
 
-# ---------- frontend/src/pages/AdminPages.jsx (unchanged) ----------
+# ---------- frontend/src/pages/AdminPages.jsx ----------
 cat > frontend/src/pages/AdminPages.jsx << 'EOF'
 import { useState, useEffect } from 'react'
 import api from '../api'
@@ -5072,7 +5392,7 @@ export default function AdminPages() {
 }
 EOF
 
-# ---------- frontend/src/pages/Report.jsx (unchanged) ----------
+# ---------- frontend/src/pages/Report.jsx ----------
 cat > frontend/src/pages/Report.jsx << 'JSXEOF'
 import { useState } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
@@ -5155,7 +5475,7 @@ export default function Report() {
 }
 JSXEOF
 
-# ---------- frontend/src/pages/CustomPage.jsx (unchanged) ----------
+# ---------- frontend/src/pages/CustomPage.jsx ----------
 cat > frontend/src/pages/CustomPage.jsx << 'EOF'
 import { useState, useEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
@@ -5275,7 +5595,7 @@ export default function App() {
 }
 JSXEOF
 
-# ---------- frontend/src/vite-env.d.ts (unchanged) ----------
+# ---------- frontend/src/vite-env.d.ts ----------
 cat > frontend/src/vite-env.d.ts << 'EOF'
 /// <reference types="vite/client" />
 EOF
@@ -5350,14 +5670,11 @@ sleep 15
 
 if [ -n "$BACKUP_FILE" ] && [ -f "$BACKUP_FILE" ]; then
   echo "🔄 Restoring database from backup $BACKUP_FILE ..."
-  # Stop backend if it's running (it might have started automatically)
   $DOCKER_COMPOSE stop backend 2>/dev/null || true
-  # Restore dump
   cat "$BACKUP_FILE" | docker exec -i $(docker ps -qf "name=db") psql -U user -d linkplatform
   echo "✅ Database restored."
 fi
 
-# Now start the rest of the services
 $DOCKER_COMPOSE up -d
 
 echo "⏳ Waiting 60s for services to fully start..."
@@ -5382,7 +5699,9 @@ cat << FINAL
   Email:    ${ADMIN_EMAIL}
   Password: ${ADMIN_PASSWORD}
 
-🛠️ V11.6.0 NEW FEATURES:
+🛠️ V11.7.0 NEW FEATURES & FIXES:
+  ✅ Added missing Jinja2 templates (public_profile.html, landing.html, page.html) – fixes profile error.
+  ✅ Added missing deleteMessage function in Messages.jsx – fixes blank messages page.
   ✅ SMTP settings UI under Admin → SMTP – change host, port, user, password, TLS directly.
   ✅ Test email button to verify configuration.
   ✅ Automatic database backup & restore on upgrade (saved to ~/link-platform-backups/).
