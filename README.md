@@ -1,3 +1,6 @@
+NOTICE: I AM TAKING TIME OFF FROM THIS PROJECT - I WILL WORK ON IT AGAIN WHEN I AM READY TO HOST IT MY SELF FOR MY PERSONAL LINKS AT https://myref.info & https://karas.page IN FUTURE.
+- profile page needs work. other then that, it really is ready for use.
+
 # 🔗 LinkPlatform v11.6.0
 
 Short Links · QR Codes · Bio Profiles · Custom Pages · Docker · WSL
