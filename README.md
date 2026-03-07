@@ -1,5 +1,7 @@
 i keep trying to add Domain Support, so admins and users can add domains to allow them to send there domain to thier profile and admins to allow domains but somehow keeps breaking so add that later once i get the small things done. also going to add NPM support and more docker support to hide the ip to connect to NPM
 
+also trying to add backup and store database keeps brekaing it as well, might just add backup and restore into admin panel, that admin can restore after upgrade,
+
 # 🔗 LinkPlatform
 
 > **Shorten, track, and manage your links. Create beautiful bio profiles.**
