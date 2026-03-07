@@ -13,8 +13,25 @@ SITE_VERSION="11.7.3"
 
 BACKEND_PORT=8000
 FRONTEND_PORT=3000
-BACKEND_URL="http://localhost:${BACKEND_PORT}"
-FRONTEND_URL="http://localhost:${FRONTEND_PORT}"
+
+# ╔══════════════════════════════════════════════════════════════════╗
+# ║  🌐 SERVER HOST — Set this to your server's IP or domain        ║
+# ║  Leave as "auto" to detect automatically from your network IP   ║
+# ║  Examples:                                                       ║
+# ║    SERVER_HOST="auto"              ← detects your LAN IP        ║
+# ║    SERVER_HOST="192.168.1.216"     ← specific LAN IP            ║
+# ║    SERVER_HOST="yourdomain.com"    ← public domain              ║
+# ╚══════════════════════════════════════════════════════════════════╝
+SERVER_HOST="auto"
+
+# Auto-detect server IP if set to "auto"
+if [ "$SERVER_HOST" = "auto" ]; then
+  SERVER_HOST=$(hostname -I | awk '{print $1}')
+  echo "🌐 Auto-detected server IP: ${SERVER_HOST}"
+fi
+
+BACKEND_URL="http://${SERVER_HOST}:${BACKEND_PORT}"
+FRONTEND_URL="http://${SERVER_HOST}:${FRONTEND_PORT}"
 
 ADMIN_EMAIL="admin@admin.admin"
 ADMIN_PASSWORD="admin"
