@@ -2188,9 +2188,10 @@ main { position: relative; z-index: 1; max-width: 780px; margin: 0 auto; padding
   position: relative; overflow: hidden; isolation: isolate;
   background: var(--card); backdrop-filter: var(--glass); -webkit-backdrop-filter: var(--glass);
   border: 1px solid var(--border); border-radius: var(--r-md);
-  padding: 1rem 0.9rem 0.85rem;
+  padding: 0.85rem 0.9rem 0.85rem;
   text-align: center; box-shadow: 0 8px 40px var(--shadow);
   animation: slideUp 0.65s ease-out;
+  contain: layout;   /* prevent children escaping card bounds */
 }
 .hero::before {
   content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 90px;
@@ -2198,32 +2199,36 @@ main { position: relative; z-index: 1; max-width: 780px; margin: 0 auto; padding
   opacity: 0.1; z-index: 0; border-radius: var(--r-md) var(--r-md) 0 0;
 }
 .hero-banner {
-  position: absolute; top: 0; left: 0; width: 100%; height: 100px;
+  position: absolute; top: 0; left: 0; width: 100%; height: 110px;
   object-fit: cover; border-radius: var(--r-md) var(--r-md) 0 0;
-  z-index: 1; opacity: 0.55;
-  mask-image: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
-  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
+  z-index: 1; opacity: 0.45;
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%);
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%);
+  pointer-events: none;
 }
 .hero-content { position: relative; z-index: 2; }
+.hero-inner-pad { position: relative; z-index: 2; padding-top: 0.2rem; }
 
 /* ── Photo row: @slug LEFT, avatar CENTER, status bubble RIGHT ── */
 .photo-row {
   display: flex; align-items: center; justify-content: center;
-  gap: 1.1rem; margin-bottom: 0.55rem; flex-wrap: wrap;
+  gap: 0.75rem; margin-bottom: 0.6rem;
+  flex-wrap: nowrap;          /* NEVER stack — keep 3-column row on all sizes */
 }
 .slug-vertical {
   writing-mode: vertical-rl; transform: rotate(180deg);
-  font-size: 0.85rem; font-weight: 700; color: var(--primary);
-  text-transform: uppercase; letter-spacing: 3px; white-space: nowrap;
-  background: rgba(255,255,255,0.05); padding: 0.55rem 0.28rem;
-  border-radius: 0.6rem; border: 1.5px solid var(--primary);
-  line-height: 1.1; flex-shrink: 0;
+  font-size: 0.78rem; font-weight: 700; color: var(--primary);
+  text-transform: uppercase; letter-spacing: 2px; white-space: nowrap;
+  background: rgba(255,255,255,0.05); padding: 0.5rem 0.25rem;
+  border-radius: 0.5rem; border: 1.5px solid var(--primary);
+  line-height: 1.1; flex-shrink: 0; min-width: 0;
   animation: slugFloat 3s ease-in-out infinite;
   text-shadow: 0 0 10px var(--primary);
+  overflow: hidden; max-height: 120px; /* clamp on very small screens */
 }
 @keyframes slugFloat { 0%,100%{transform:rotate(180deg) translateY(0)} 50%{transform:rotate(180deg) translateY(-4px)} }
 
-.avatar-wrap { position: relative; width: 74px; height: 74px; display: inline-block; flex-shrink: 0; }
+.avatar-wrap { position: relative; width: 74px; height: 74px; display: inline-block; flex-shrink: 0; flex-grow: 0; }
 .avatar-ring {
   position: absolute; inset: -6px; border-radius: 50%; opacity: 0.8;
   background: conic-gradient(var(--primary), var(--secondary), var(--accent), var(--primary));
@@ -2245,13 +2250,14 @@ main { position: relative; z-index: 1; max-width: 780px; margin: 0 auto; padding
   position: relative; background: rgba(255,255,255,0.07);
   backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   border-radius: 1rem 1rem 1rem 0.3rem;
-  padding: 0.7rem 1rem; max-width: 190px;
-  color: var(--text-color); font-size: 0.82rem; font-weight: 500;
+  padding: 0.55rem 0.75rem; max-width: 180px; min-width: 0;
+  color: var(--text-color); font-size: 0.78rem; font-weight: 500;
   border: 1.5px solid var(--primary);
   box-shadow: 0 4px 16px rgba(0,0,0,0.3), 0 0 12px rgba(0,0,0,0.1);
-  flex-shrink: 0; line-height: 1.4;
+  flex-shrink: 1; flex-basis: 140px; line-height: 1.4;
   animation: bubblePop 0.4s ease-out;
   text-shadow: 0 0 8px var(--primary);
+  word-break: break-word;
 }
 @keyframes bubblePop { from{opacity:0;transform:scale(.85)} to{opacity:1;transform:scale(1)} }
 .thought-bubble::before {
@@ -2360,11 +2366,20 @@ main { position: relative; z-index: 1; max-width: 780px; margin: 0 auto; padding
   main { padding: 0.6rem 2rem 1.2rem; }
   .p-card { flex: 1 1 calc(33.33% - 0.2rem); }
 }
-@media (max-width: 500px) {
-  .photo-row { flex-direction: column; }
-  .slug-vertical { writing-mode: horizontal-tb; transform: none; padding: 0.25rem 0.7rem; }
-  .thought-bubble::before, .thought-bubble::after { display: none; }
-  .thought-bubble { max-width: 100%; }
+/* ── Mobile tweaks ── keep the 3-column row, just shrink components */
+@media (max-width: 480px) {
+  main { padding: 0.4rem 0.4rem 1rem; gap: 0.4rem; }
+  .photo-row { gap: 0.4rem; }
+  .slug-vertical { font-size: 0.65rem; letter-spacing: 1px; padding: 0.4rem 0.2rem; max-height: 90px; }
+  .avatar-wrap { width: 62px; height: 62px; }
+  .avatar { width: 62px; height: 62px; }
+  .avatar-ring { inset: -4px; }
+  .thought-bubble { font-size: 0.7rem; padding: 0.4rem 0.55rem; flex-basis: 110px; max-width: 130px; }
+  .thought-bubble::before { border-right-width: 10px; left: -10px; }
+  .thought-bubble::after  { border-right-width: 8px; left: -7px; }
+  .hero { padding: 0.7rem 0.5rem 0.65rem; }
+  .sec-title { font-size: 0.72rem; }
+  .p-name { font-size: 0.78rem; }
 }
 </style>
 </head>
@@ -2421,7 +2436,7 @@ main { position: relative; z-index: 1; max-width: 780px; margin: 0 auto; padding
         {% for icon in social_icons %}
         <a href="{{ icon.url }}" target="_blank" rel="noopener" class="s-link" title="{{ icon.platform }}">
           {% if icon.icon_url %}
-          <img src="{{ icon.icon_url }}" alt="{{ icon.platform }}">
+          <img src="{{ icon.icon_url if icon.icon_url.startswith('http') else base_url.rstrip('/') + icon.icon_url }}" alt="{{ icon.platform }}" style="width:18px;height:18px;object-fit:contain;border-radius:3px;">
           {% else %}
           <i class="fas fa-link"></i>
           {% endif %}
@@ -2433,20 +2448,82 @@ main { position: relative; z-index: 1; max-width: 780px; margin: 0 auto; padding
   </header>
 
   <!-- ═══ TABS AS SECTIONS ═══ -->
+  {# icon and accent-color per tab type #}
+  {% set TYPE_ICON  = {'links':'fas fa-link','social':'fas fa-share-alt','contact':'fas fa-envelope','text':'fas fa-align-left','video':'fas fa-play-circle','gallery':'fas fa-images'} %}
+  {% set TYPE_LABEL = {'links':'fas fa-globe','social':'fas fa-share-nodes','contact':'fas fa-address-card','text':'fas fa-file-alt','video':'fas fa-video','gallery':'fas fa-photo-film'} %}
+  {# rotating icon accent colors — cycles for each link card #}
+  {% set ICON_COLORS = [
+    ('rgba(255,0,0,.15)',     '#ff4444'),
+    ('rgba(99,100,255,.15)',  '#6364ff'),
+    ('rgba(0,183,241,.15)',   '#00b7f1'),
+    ('rgba(52,168,83,.15)',   '#34a853'),
+    ('rgba(155,89,182,.15)',  '#9b59b6'),
+    ('rgba(255,153,0,.15)',   '#ff9900'),
+    ('rgba(232,68,68,.15)',   '#e84444'),
+    ('rgba(30,215,96,.15)',   '#1ed760'),
+    ('rgba(0,128,255,.15)',   '#0a80ff'),
+    ('rgba(241,196,15,.15)',  '#f1c40f'),
+  ] %}
+
   {% for tab in tabs %}
-  <section class="section">
-    <h2 class="sec-title"><i class="fas fa-layer-group"></i> {{ tab.title }}</h2>
+  <section class="section" {% if tab.bg_url %}style="background-image:url({{ tab.bg_url if tab.bg_url.startswith('http') else base_url.rstrip('/') + tab.bg_url }});background-size:cover;background-position:center;"{% endif %}>
+    {# Section title with type icon #}
+    <h2 class="sec-title">
+      <i class="{{ TYPE_LABEL.get(tab.tab_type, 'fas fa-layer-group') }}"></i>
+      {{ tab.title }}
+    </h2>
+
+    {# Optional text content shown above links #}
     {% if tab.text_content %}
-    <p style="font-size:.8rem;color:var(--text-muted-color);margin-bottom:.6rem;">{{ tab.text_content }}</p>
+    <p style="font-size:.82rem;color:var(--text-muted-color);margin-bottom:.65rem;line-height:1.5;">{{ tab.text_content }}</p>
     {% endif %}
+
+    {# ── Link cards ── #}
+    {% if tab.links %}
     <div class="card-list">
       {% for link in tab.links %}
+      {% set ci = loop.index0 % 10 %}
+      {% set ibg = ICON_COLORS[ci][0] %}
+      {% set iclr = ICON_COLORS[ci][1] %}
+
+      {# ── Video embed ── #}
+      {% if link.link_type == 'embed' or link.url | is_embed %}
+      <div class="p-card" style="flex-direction:column;padding:.75rem;">
+        <div style="display:flex;align-items:center;gap:.65rem;width:100%;margin-bottom:.55rem;">
+          <div class="p-icon" style="background:{{ ibg }};color:{{ iclr }}"><i class="fas fa-play-circle"></i></div>
+          <div class="p-info">
+            <span class="p-name">{{ link.title }}</span>
+            {% if link.description %}<span class="p-desc">{{ link.description }}</span>{% endif %}
+          </div>
+        </div>
+        <div style="width:100%;border-radius:8px;overflow:hidden;aspect-ratio:16/9;">
+          <iframe src="{{ link.url | embed_url }}" frameborder="0" allowfullscreen style="width:100%;height:100%;border:none;"></iframe>
+        </div>
+      </div>
+
+      {# ── Image link ── #}
+      {% elif link.link_type == 'image' %}
+      {% set imgurl = link.url if link.url.startswith('http') else base_url.rstrip('/') + link.url %}
+      <a href="{{ imgurl }}" target="_blank" rel="noopener" class="p-card" style="flex-direction:column;padding:0;overflow:hidden;">
+        <img src="{{ imgurl }}" alt="{{ link.title }}" style="width:100%;max-height:220px;object-fit:cover;border-radius:var(--r-sm);">
+        {% if link.title or link.description %}
+        <div style="padding:.55rem .75rem;width:100%;">
+          {% if link.title %}<span class="p-name">{{ link.title }}</span>{% endif %}
+          {% if link.description %}<span class="p-desc" style="display:block;margin-top:2px;">{{ link.description }}</span>{% endif %}
+        </div>
+        {% endif %}
+      </a>
+
+      {# ── Regular link card ── #}
+      {% else %}
       <a href="{{ link.url }}" target="_blank" rel="noopener" class="p-card">
-        <div class="p-icon" style="background:rgba(255,255,255,0.06);color:var(--primary)">
+        <div class="p-icon" style="background:{{ ibg }};color:{{ iclr }};flex-shrink:0;">
           {% if link.thumbnail_url %}
-          <img src="{{ link.thumbnail_url }}" alt="" style="width:22px;height:22px;border-radius:4px;object-fit:cover">
+          {# Fix relative /uploads/ paths to absolute URL #}
+          {% set thumb = link.thumbnail_url if link.thumbnail_url.startswith('http') else base_url.rstrip('/') + link.thumbnail_url %}
+          <img src="{{ thumb }}" alt="" style="width:22px;height:22px;border-radius:4px;object-fit:cover;">
           {% else %}
-          <i class="fas fa-link"></i>
+          <i class="{{ TYPE_ICON.get(tab.tab_type, 'fas fa-link') }}"></i>
           {% endif %}
         </div>
         <div class="p-info">
@@ -2455,8 +2532,11 @@ main { position: relative; z-index: 1; max-width: 780px; margin: 0 auto; padding
         </div>
         <i class="fas fa-arrow-right arr"></i>
       </a>
+      {% endif %}
       {% endfor %}
     </div>
+    {% endif %}
+
   </section>
   {% endfor %}
 
@@ -2919,7 +2999,23 @@ FNDOCKEREOF
 cat > frontend/vite.config.js << 'EOF'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-export default defineConfig({ plugins:[react()], server:{host:'0.0.0.0',port:3000,strictPort:true,watch:{usePolling:true}} })
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    host: '0.0.0.0',
+    port: 3000,
+    strictPort: true,
+    watch: { usePolling: true }
+  },
+  build: {
+    rollupOptions: {
+      input: 'index.html'
+    }
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router-dom', 'axios']
+  }
+})
 EOF
 
 # ---------- frontend/.env ----------
@@ -3953,7 +4049,7 @@ export default function BioProfile() {
   const [toast, setToast] = useState(null)
   const [profile, setProfile] = useState({
     custom_slug: '', bio_description: '', header_text: '', sub_header_text: '',
-    theme_color: '#a78bfa', profile_photo_url: '', header_image_url: '',
+    theme_color: '#a78bfa', selected_theme_id: 'may-flowers', profile_photo_url: '', header_image_url: '',
     page_bg_url: '', header_style: 'solid', theme_html: '',
     profile_redirect_url: '', is_redirect_enabled: false,
     show_social_icons: true, daily_status: '',
@@ -3976,7 +4072,10 @@ export default function BioProfile() {
       api.get('/api/profile/me/bio/social-icons'),
       api.get('/api/profile/me/bio/tabs')
     ]).then(([p, i, t]) => {
-      setProfile({ ...profile, ...p.data })
+      const pdata = p.data
+      // Derive which preset is active based on theme_color match (THEME_PRESETS already imported above)
+      const matched = THEME_PRESETS.find(t => t.id !== 'custom' && pdata.theme_color === t.primary)
+      setProfile({ ...profile, ...pdata, selected_theme_id: matched ? matched.id : (pdata.selected_theme_id || 'custom') })
       setSocialIcons(i.data)
       setTabs(t.data)
     }).catch(() => setToast({ message: 'Failed to load profile', type: 'error' }))
@@ -4171,18 +4270,19 @@ export default function BioProfile() {
                   <label style={{ fontWeight: 500, display: 'block', marginBottom: '.6rem' }}>🎨 Select a Theme</label>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px,1fr))', gap: '.55rem', marginBottom: '.75rem' }}>
                     {THEME_PRESETS.map(preset => {
-                      const isActive = profile.theme_color === preset.primary
+                      const isActive = profile.selected_theme_id === preset.id
                       return (
                         <button
                           type="button"
                           key={preset.id}
                           onClick={() => {
                             if (preset.id === 'custom') {
-                              setProfile({ ...profile, theme_color: preset.primary })
+                              setProfile({ ...profile, theme_color: preset.primary, selected_theme_id: 'custom' })
                             } else {
                               setProfile({
                                 ...profile,
                                 theme_color: preset.primary,
+                                selected_theme_id: preset.id,
                                 theme_html: `<script>window.THEME_FX='${preset.fx}';<\/script>\n<style>\n:root{\n  --primary:${preset.primary};\n  --secondary:${preset.secondary};\n  --accent:${preset.accent};\n  --bg:${preset.bg};\n  --text-color:${preset.text};\n  --text-muted-color:${preset.muted};\n}\n</style>`
                               })
                             }
