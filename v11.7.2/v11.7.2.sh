@@ -2111,7 +2111,7 @@ cat > backend/app/templates/public_profile.html << 'PROFILEHTML_EOF'
   --primary:    {{ profile.theme_color or '#e91e8c' }};
   --secondary:  #9b59b6;
   --accent:     #1abc9c;
-  --bg:         #100618;
+  --bg:         {% if profile.page_bg_url %}url({{ profile.page_bg_url }}) center/cover no-repeat fixed{% else %}#100618{% endif %};
   --text-color: #f8f9fa;
   --text-muted-color: #c070b0;
   /* these get overridden by theme_html if set */
@@ -2129,7 +2129,7 @@ cat > backend/app/templates/public_profile.html << 'PROFILEHTML_EOF'
 html { scroll-behavior: smooth; }
 body {
   font-family: 'Outfit', system-ui, sans-serif;
-  background-color: var(--bg);
+  background: var(--bg);
   color: var(--text-color);
   line-height: 1.6;
   min-height: 100vh;
@@ -2137,7 +2137,7 @@ body {
   transition: background-color 0.9s ease, color 0.9s ease;
 }
 ::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-track { background: #100618; }
 ::-webkit-scrollbar-thumb { background: var(--card-hov); border-radius: 3px; }
 
 /* ── Particles ── */
@@ -2196,6 +2196,13 @@ main { position: relative; z-index: 1; max-width: 780px; margin: 0 auto; padding
   content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 90px;
   background: linear-gradient(135deg, var(--primary), var(--secondary));
   opacity: 0.1; z-index: 0; border-radius: var(--r-md) var(--r-md) 0 0;
+}
+.hero-banner {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100px;
+  object-fit: cover; border-radius: var(--r-md) var(--r-md) 0 0;
+  z-index: 1; opacity: 0.55;
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
 }
 .hero-content { position: relative; z-index: 2; }
 
@@ -2369,6 +2376,9 @@ main { position: relative; z-index: 1; max-width: 780px; margin: 0 auto; padding
 <main>
   <!-- ═══ HERO ═══ -->
   <header class="hero">
+    {% if profile.header_image_url %}
+    <img src="{{ profile.header_image_url }}" alt="" class="hero-banner">
+    {% endif %}
     <div class="tech-layer" id="heroLayer"></div>
     <div class="hero-content">
 
