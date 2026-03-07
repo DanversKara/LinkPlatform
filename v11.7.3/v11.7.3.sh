@@ -2404,6 +2404,32 @@ main { position: relative; z-index: 1; max-width: 780px; margin: 0 auto; padding
   .sec-title { font-size: 0.72rem; }
   .p-name { font-size: 0.78rem; }
 }
+
+/* ── Card Styles: solid / glass / frost / transparent ── */
+.card-solid {
+  background: var(--card) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.card-glass {
+  background: rgba(255,255,255,0.08) !important;
+  backdrop-filter: blur(14px) saturate(1.6) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(1.6) !important;
+  border-color: rgba(255,255,255,0.18) !important;
+}
+.card-frost {
+  background: rgba(255,255,255,0.15) !important;
+  backdrop-filter: blur(28px) saturate(1.8) brightness(1.1) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(1.8) brightness(1.1) !important;
+  border-color: rgba(255,255,255,0.30) !important;
+}
+.card-transparent {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-color: rgba(255,255,255,0.12) !important;
+  box-shadow: none !important;
+}
 </style>
 </head>
 <body>
@@ -2413,7 +2439,7 @@ main { position: relative; z-index: 1; max-width: 780px; margin: 0 auto; padding
 
 <main>
   <!-- ═══ HERO ═══ -->
-  <header class="hero" style="--banner-h: {{ profile.header_image_height or 30 }}%">
+  <header class="hero card-{{ profile.header_style or 'solid' }}" style="--banner-h: {{ profile.header_image_height or 30 }}%">
     {% if profile.header_image_url %}
     <img src="{{ profile.header_image_url }}" alt="" class="hero-banner">
     {% endif %}
@@ -2489,7 +2515,7 @@ main { position: relative; z-index: 1; max-width: 780px; margin: 0 auto; padding
   ] %}
 
   {% for tab in tabs %}
-  <section class="section" {% if tab.bg_url %}style="background-image:url({{ tab.bg_url if tab.bg_url.startswith('http') else base_url.rstrip('/') + tab.bg_url }});background-size:cover;background-position:center;"{% endif %}>
+  <section class="section card-{{ profile.header_style or 'solid' }}" {% if tab.bg_url %}style="background-image:url({{ tab.bg_url if tab.bg_url.startswith('http') else base_url.rstrip('/') + tab.bg_url }});background-size:cover;background-position:center;"{% endif %}>
     {# Section title with type icon #}
     <h2 class="sec-title">
       <i class="{{ TYPE_LABEL.get(tab.tab_type, 'fas fa-layer-group') }}"></i>
@@ -2576,7 +2602,7 @@ main { position: relative; z-index: 1; max-width: 780px; margin: 0 auto; padding
   </div>
 
   <!-- ═══ FOOTER ═══ -->
-  <footer class="footer">
+  <footer class="footer card-{{ profile.header_style or 'solid' }}">
     <div class="tech-layer" id="footerLayer" style="opacity:.35"></div>
     <p style="position:relative;z-index:2">
       Powered by <a href="{{ base_url }}">{{ config.SITE_NAME or 'LinkPlatform' }}</a> &bull;
