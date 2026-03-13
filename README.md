@@ -2,7 +2,7 @@ Pre-release v11.7.9.sh i not fully tested it - backup older version before testi
 
 # 🔗 LinkPlatform
 
-**LinkPlatform** is a full-stack, Docker-powered alternative to commercial tools like Bitly and Linktree. Shorten links, track clicks, build beautiful bio profile pages, and manage everything from a clean admin dashboard — all running on your own infrastructure.
+**LinkPlatform** is a full-stack, Docker-powered alternative to commercial tools. Shorten links, track clicks, build beautiful bio profile pages, and manage everything from a clean admin area — all running on your own infrastructure at home, office, vps, etc.
 
 ---
 
