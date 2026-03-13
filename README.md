@@ -1,8 +1,8 @@
+Pre-release v11.7.9.sh i not fully tested it - backup older version before testing.
+
 # 🔗 LinkPlatform
 
-> Self-hosted link management & bio page platform — your data, your server, no phone-home.
-
-**LinkPlatform** is a full-stack, Docker-powered alternative to commercial tools like Bitly and Linktree. Shorten links, track clicks, build beautiful bio profile pages, and manage everything from a clean admin dashboard — all running on your own infrastructure.
+**LinkPlatform** is a full-stack, Docker-powered alternative to commercial tools. Shorten links, track clicks, build beautiful bio profile pages, and manage everything from a clean admin area — all running on your own infrastructure at home, office, vps, etc.
 
 ---
 
@@ -293,3 +293,7 @@ Users select a theme from the Bio Profile editor. Each theme includes colors, pa
 ## 📄 License
 
 Self-hosted. No proprietary code copied. Build it, run it, keep your data.
+
+## FUTURE PLANS - MAYBE?
+- Billing / Payment setup:
+  -- but thats not really something i want or wanna get into, as i am not to well sure where to start with something like that, so for now if its what you need, this is open source, sauce it yourself and share the code later, so we can share it everyone to have access to and i can bake it into the sauce.
