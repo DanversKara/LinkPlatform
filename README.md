@@ -293,3 +293,7 @@ Users select a theme from the Bio Profile editor. Each theme includes colors, pa
 ## 📄 License
 
 Self-hosted. No proprietary code copied. Build it, run it, keep your data.
+
+## FUTURE PLANS - MAYBE?
+- Billing / Payment setup:
+  -- but thats not really something i want or wanna get into, as i am not to well sure where to start with something like that, so for now if its what you need, this is open source, sauce it yourself and share the code later, so we can share it everyone to have access to and i can bake it into the sauce.
