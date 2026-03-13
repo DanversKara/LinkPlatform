@@ -1,3 +1,5 @@
+Pre-release v11.7.9.sh i not fully tested it - backup older version before testing.
+
 # 🔗 LinkPlatform
 
 > Self-hosted link management & bio page platform — your data, your server, no phone-home.
