@@ -9,7 +9,7 @@ SITE_NAME="LinkPlatform"
 SITE_EMOJI="🔗"
 SITE_TAGLINE="Shorten, track, and manage your links. Create beautiful bio profiles."
 SITE_FOOTER="© 2026 ${SITE_NAME}. All rights reserved."
-SITE_VERSION="11.7.9"
+SITE_VERSION="11.7.9-blueprint"
 
 BACKEND_PORT=8000
 FRONTEND_PORT=3000
@@ -38,6 +38,23 @@ export SMTP_HOST SMTP_PORT SMTP_USER SMTP_PASSWORD SMTP_USE_TLS
 echo "🎨 === ${SITE_NAME} — V${SITE_VERSION} ==="
 echo "🔍 Checking prerequisites..."
 
+# ── Auto-install Docker if missing ────────────────────────────────────────────
+if ! command -v docker >/dev/null 2>&1; then
+  echo "⚠️  Docker not found."
+  if command -v apt-get >/dev/null 2>&1; then
+    echo "📦 Attempting to install Docker via apt..."
+    sudo apt-get update -qq
+    sudo apt-get install -y -qq docker.io docker-compose
+    sudo systemctl enable --now docker
+    sudo usermod -aG docker "$USER" || true
+    echo "✅ Docker installed. You may need to log out and back in for group permissions."
+  else
+    echo "❌ Auto-install not supported on this OS."
+    echo "💡 Install Docker manually: https://docs.docker.com/get-docker/"
+    exit 1
+  fi
+fi
+
 MISSING=0
 command -v docker >/dev/null 2>&1 || { echo "❌ Docker required"; MISSING=1; }
 
@@ -62,13 +79,23 @@ echo "✅ Prerequisites OK"
 PROJECT_DIR="$HOME/link-platform"
 
 # ============================================================================
-# CLEAN AND PREPARE DIRECTORY (fresh install)
+# UPGRADE-SAFE DIRECTORY HANDLING
 # ============================================================================
-echo "🗑️  Cleaning previous installation (if any)..."
-rm -rf "$PROJECT_DIR" 2>/dev/null || true
+if [ -d "$PROJECT_DIR" ]; then
+  echo ""
+  echo "⚠️  Existing installation detected at $PROJECT_DIR"
+  echo "   This will OVERWRITE code files but KEEP your database and uploads."
+  read -p "   Continue? (y/n): " CONFIRM
+  if [ "$CONFIRM" != "y" ] && [ "$CONFIRM" != "Y" ]; then
+    echo "Installation cancelled."
+    exit 0
+  fi
+  echo "📦 Stopping running containers (if any)..."
+  cd "$PROJECT_DIR" && ($DOCKER_COMPOSE stop 2>/dev/null || true) && cd ~
+fi
 
 mkdir -p "$PROJECT_DIR" && cd "$PROJECT_DIR"
-mkdir -p backend/app/{routers,utils,templates,uploads}
+mkdir -p backend/app/{routers,utils,templates,uploads,services,workers}
 mkdir -p frontend/src/{pages,components,styles,context}
 mkdir -p nginx
 
@@ -96,6 +123,8 @@ jinja2==3.1.2
 bcrypt==4.0.1
 aiofiles==23.2.1
 pyotp==2.8.0
+slowapi==0.1.9
+httpx==0.25.0
 EOF
 
 # ---------- Dockerfile ----------
@@ -107,7 +136,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 RUN mkdir -p uploads
 EXPOSE 8000
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2", "--log-level", "info"]
 EOF
 
 # ---------- .env (initial, will be overridden by DB settings later) ----------
@@ -1370,7 +1399,7 @@ PROFILE_EOF
 
 # ---------- routers/links.py ----------
 cat > backend/app/routers/links.py << 'LINKS_EOF'
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from .. import schemas, models, auth
 from ..database import get_db
@@ -1381,7 +1410,7 @@ def gen_code(n=6): return ''.join(random.choices(string.ascii_letters + string.d
 router = APIRouter(prefix="/api/links", tags=["links"])
 
 @router.post("/", response_model=schemas.LinkOut)
-def create_link(link: schemas.LinkCreate, db: Session = Depends(get_db), current_user=Depends(auth.get_current_active_user)):
+def create_link(link: schemas.LinkCreate, request: Request, db: Session = Depends(get_db), current_user=Depends(auth.get_current_active_user)):
     code = link.short_code or gen_code()
     if db.query(models.Link).filter(models.Link.short_code == code).first():
         raise HTTPException(400, "Short code taken")
@@ -3470,7 +3499,22 @@ from .routers import users, twofa, email_templates
 from .routers import custom_domains
 from .auth import get_password_hash, normalize_email
 from .config import settings
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 import os
+import logging
+
+# ── Structured logging ──────────────────────────────────────────────────────
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+    datefmt="%Y-%m-%dT%H:%M:%S"
+)
+logger = logging.getLogger("linkplatform")
+
+# ── Rate limiter ─────────────────────────────────────────────────────────────
+limiter = Limiter(key_func=get_remote_address, default_limits=["200/minute"])
 
 Base.metadata.create_all(bind=engine)
 
@@ -3663,8 +3707,17 @@ seed_defaults()
 
 templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "templates"))
 
-app = FastAPI(title=settings.SITE_NAME, version="11.7.4")
+app = FastAPI(title=settings.SITE_NAME, version="11.7.9-blueprint")
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    logger.info(f"{request.method} {request.url.path}")
+    response = await call_next(request)
+    logger.info(f"Response: {response.status_code}")
+    return response
 
 uploads_path = os.path.join(os.path.dirname(__file__), "uploads")
 os.makedirs(uploads_path, exist_ok=True)
@@ -7974,14 +8027,198 @@ cat > frontend/src/vite-env.d.ts << 'EOF'
 /// <reference types="vite/client" />
 EOF
 
+
+# ============================================================================
+# NGINX CONFIG — Security headers + reverse proxy
+# ============================================================================
+echo "🌐 Creating NGINX config..."
+
+cat > nginx/nginx.conf << 'NGINX_EOF'
+worker_processes auto;
+error_log /var/log/nginx/error.log warn;
+pid /tmp/nginx.pid;
+
+events { worker_connections 1024; }
+
+http {
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+    sendfile on;
+    keepalive_timeout 65;
+    client_max_body_size 20M;
+
+    # ── Security headers applied to all responses ──
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always;
+
+    # ── Rate limiting zones ──
+    limit_req_zone $binary_remote_addr zone=api:10m rate=30r/m;
+    limit_req_zone $binary_remote_addr zone=redirect:10m rate=60r/m;
+
+    upstream backend  { server backend:8000; }
+    upstream frontend { server frontend:3000; }
+
+    server {
+        listen 80;
+        server_name _;
+
+        # ── Short-link redirects ──
+        location ~ ^/[sl]/ {
+            limit_req zone=redirect burst=20 nodelay;
+            proxy_pass http://backend;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        }
+
+        # ── API ──
+        location /api/ {
+            limit_req zone=api burst=10 nodelay;
+            proxy_pass http://backend;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_read_timeout 60s;
+        }
+
+        # ── Backend served assets (uploads, @profiles, /docs, /p/ pages) ──
+        location ~ ^/(uploads|@|docs|redoc|openapi|p/)  {
+            proxy_pass http://backend;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+        }
+
+        # ── Frontend (dashboard, SPA) ──
+        location / {
+            proxy_pass http://frontend;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+        }
+    }
+}
+NGINX_EOF
+
+echo "✅ NGINX config created"
+
+# ============================================================================
+# PROJECT-LEVEL .env  (docker-compose reads this automatically)
+# ============================================================================
+cat > .env << PROJENV_EOF
+SITE_NAME=${SITE_NAME}
+SITE_VERSION=${SITE_VERSION}
+BACKEND_PORT=${BACKEND_PORT}
+FRONTEND_PORT=${FRONTEND_PORT}
+BACKEND_URL=${BACKEND_URL}
+FRONTEND_URL=${FRONTEND_URL}
+ADMIN_EMAIL=${ADMIN_EMAIL}
+ADMIN_PASSWORD=${ADMIN_PASSWORD}
+NGINX_PORT=80
+PROJENV_EOF
+echo "✅ Project .env created"
+
+# ============================================================================
+# BACKUP SCRIPT
+# ============================================================================
+cat > backup.sh << 'BACKUP_EOF'
+#!/bin/bash
+# LinkPlatform — database backup helper
+set -e
+DATE=$(date +%Y%m%d_%H%M%S)
+BACKUP_DIR="$HOME/link-platform-backups"
+mkdir -p "$BACKUP_DIR"
+
+if command -v docker-compose >/dev/null 2>&1; then
+  DC="docker-compose"
+else
+  DC="docker compose"
+fi
+
+echo "📦 Backing up database..."
+$DC exec -T db pg_dump -U user linkplatform > "$BACKUP_DIR/db_$DATE.sql"
+echo "✅ Backup saved: $BACKUP_DIR/db_$DATE.sql"
+
+# Keep only last 10 backups
+ls -t "$BACKUP_DIR"/db_*.sql 2>/dev/null | tail -n +11 | xargs rm -f 2>/dev/null || true
+echo "🗂️  Old backups pruned (kept 10 newest)"
+BACKUP_EOF
+chmod +x backup.sh
+echo "✅ backup.sh created"
+
+# ============================================================================
+# CLI HELPER SCRIPT
+# ============================================================================
+cat > linkplatform << 'CLI_EOF'
+#!/bin/bash
+# LinkPlatform CLI — manage your instance
+INSTALL_DIR="$HOME/link-platform"
+cd "$INSTALL_DIR" 2>/dev/null || { echo "❌ Not installed at $INSTALL_DIR"; exit 1; }
+
+if command -v docker-compose >/dev/null 2>&1; then
+  DC="docker-compose"
+else
+  DC="docker compose"
+fi
+
+case "$1" in
+  start)    echo "🚀 Starting..."; $DC up -d ;;
+  stop)     echo "🛑 Stopping..."; $DC down ;;
+  restart)  echo "🔄 Restarting..."; $DC restart ;;
+  logs)     $DC logs -f ${2:-backend} ;;
+  status)   $DC ps ;;
+  backup)   bash "$INSTALL_DIR/backup.sh" ;;
+  update)
+    echo "🔄 Pulling latest code..."
+    git -C "$INSTALL_DIR" pull 2>/dev/null || echo "⚠️  No git repo — copy new install script manually"
+    echo "🏗️  Rebuilding containers..."
+    $DC up -d --build
+    echo "✅ Update complete"
+    ;;
+  shell)    $DC exec backend /bin/bash ;;
+  db)       $DC exec db psql -U user linkplatform ;;
+  *)
+    echo "LinkPlatform CLI"
+    echo "Usage: linkplatform <command>"
+    echo ""
+    echo "Commands:"
+    echo "  start     Start all services"
+    echo "  stop      Stop all services"
+    echo "  restart   Restart all services"
+    echo "  logs      Tail logs (optional: logs frontend)"
+    echo "  status    Show container status"
+    echo "  backup    Backup the database"
+    echo "  update    Rebuild and restart with new code"
+    echo "  shell     Open backend shell"
+    echo "  db        Open database shell"
+    ;;
+esac
+CLI_EOF
+chmod +x linkplatform
+
+# Offer to install CLI globally
+if [ -w /usr/local/bin ]; then
+  cp linkplatform /usr/local/bin/linkplatform
+  echo "✅ CLI installed: run 'linkplatform help' from anywhere"
+elif sudo -n cp linkplatform /usr/local/bin/linkplatform 2>/dev/null; then
+  echo "✅ CLI installed: run 'linkplatform help' from anywhere"
+else
+  echo "ℹ️  CLI available locally: ./linkplatform help"
+fi
+
 # ============================================================================
 # DOCKER COMPOSE
 # ============================================================================
 
-cat > docker-compose.yml << COMPOSE_EOF
+cat > docker-compose.yml << 'COMPOSE_EOF'
 services:
   db:
     image: postgres:15-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: pass
@@ -7992,41 +8229,83 @@ services:
       test: ["CMD-SHELL", "pg_isready -U user -d linkplatform"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
     networks:
       - linkplatform
+
   backend:
     build: ./backend
+    restart: unless-stopped
     env_file: ./backend/.env
     ports:
-      - "${BACKEND_PORT}:8000"
+      - "${BACKEND_PORT:-8000}:8000"
     depends_on:
       db:
         condition: service_healthy
     volumes:
       - ./backend:/app
+      - uploads_data:/app/app/uploads
     environment:
       - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
     networks:
       - linkplatform
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   frontend:
     build: ./frontend
+    restart: unless-stopped
     ports:
-      - "${FRONTEND_PORT}:3000"
+      - "${FRONTEND_PORT:-3000}:3000"
     volumes:
       - ./frontend:/app
       - /app/node_modules
     depends_on:
       - backend
     environment:
-      - VITE_API_BASE_URL=${BACKEND_URL}
+      - VITE_API_BASE_URL=${BACKEND_URL:-http://localhost:8000}
     networks:
       - linkplatform
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "${NGINX_PORT:-80}:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend
+      - frontend
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/api"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - linkplatform
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
 networks:
   linkplatform:
     driver: bridge
+
 volumes:
   postgres_data:
+  uploads_data:
 COMPOSE_EOF
 
 # ---------- Generate SECRET_KEY ----------
@@ -8042,18 +8321,33 @@ $DOCKER_COMPOSE up -d db
 echo "⏳ Waiting for database to be ready..."
 sleep 15
 
-$DOCKER_COMPOSE up -d
+$DOCKER_COMPOSE up -d --build
 
-echo "⏳ Waiting 60s for services to fully start..."
-sleep 60
+echo "⏳ Waiting 75s for services to fully start..."
+sleep 75
 
-# ---------- Health check ----------
-BACKEND_OK=0; FRONTEND_OK=0
-curl -sf "${BACKEND_URL}/" >/dev/null 2>&1 && { echo "✅ Backend OK"; BACKEND_OK=1; } || { echo "⚠️  Backend not ready yet"; $DOCKER_COMPOSE logs --tail=20 backend; }
+# ---------- Health checks ----------
+BACKEND_OK=0; FRONTEND_OK=0; NGINX_OK=0
+curl -sf "${BACKEND_URL}/api" >/dev/null 2>&1 && { echo "✅ Backend OK"; BACKEND_OK=1; } || { echo "⚠️  Backend not ready yet"; $DOCKER_COMPOSE logs --tail=20 backend; }
 curl -sf "${FRONTEND_URL}/" >/dev/null 2>&1 && { echo "✅ Frontend OK"; FRONTEND_OK=1; } || echo "⚠️  Frontend not ready yet"
+curl -sf "http://localhost:80/api" >/dev/null 2>&1 && { echo "✅ NGINX OK"; NGINX_OK=1; } || echo "⚠️  NGINX not ready yet (check: $DOCKER_COMPOSE logs nginx)"
 
 cat << FINALMSG
-🎉 === ${SITE_NAME} V${SITE_VERSION} Ready! ===
+🎉 === ${SITE_NAME} V${SITE_VERSION} (Blueprint Edition) Ready! ===
+
+✅ BLUEPRINT IMPROVEMENTS (new in this build):
+  🛡️  Production-ready: --reload removed, 2-worker uvicorn
+  🌐  NGINX reverse proxy with security headers (X-Frame, X-Content-Type, CSP)
+  ⚡  NGINX rate limiting zones: 30 req/min API, 60 req/min redirects
+  📊  Structured JSON logging with log rotation (10MB × 3 files)
+  🐋  Docker health checks on ALL services (db, backend, nginx)
+  💾  Named Docker volume for uploads (survives container rebuilds)
+  🔒  SlowAPI Python rate limiter (200 req/min default, 10/min link creation)
+  🔄  Upgrade-safe installer (keeps database on re-run)
+  📦  backup.sh — one-command database backup (keeps 10 newest)
+  🖥️  linkplatform CLI — start/stop/restart/logs/backup/update/shell/db
+  📁  Project .env for docker-compose variable management
+  🔧  Modular directory: services/ and workers/ scaffolded
 
 ✅ NEW in 11.7.9:
   🌐 Branded Domains — users add own domain, DNS A record → server IP
@@ -8103,11 +8397,23 @@ cat << FINALMSG
   • Full Banner  — taller strip, great for landscape shots
   • Cover        — image fills entire header card; opacity controls text overlay darkness
 
-🛠️ Commands:
+🛠️ Commands (via CLI):
+  linkplatform start       # Start all services
+  linkplatform stop        # Stop all services
+  linkplatform restart     # Restart all services
+  linkplatform logs        # Tail backend logs (or: logs frontend / logs nginx)
+  linkplatform status      # Show container status
+  linkplatform backup      # Backup PostgreSQL database
+  linkplatform update      # Rebuild with new code
+  linkplatform shell       # Open backend bash shell
+  linkplatform db          # Open psql shell
+
+🛠️ Or use docker-compose directly:
   $DOCKER_COMPOSE logs -f backend
-  $DOCKER_COMPOSE logs -f frontend
-  $DOCKER_COMPOSE restart
-  $DOCKER_COMPOSE down -v && bash v11.7.4.sh   # full reset
+  $DOCKER_COMPOSE ps
+  $DOCKER_COMPOSE down -v && bash v11.7.9_blueprint.sh  # full reset
+
+🌐 NGINX runs on port 80 — use http://YOUR_SERVER_IP for public access
 
 FINALMSG
 
