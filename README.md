@@ -1,244 +1,295 @@
-i keep trying to add Domain Support, so admins and users can add domains to allow them to send there domain to thier profile and admins to allow domains but somehow keeps breaking so add that later once i get the small things done. also going to add NPM support and more docker support to hide the ip to connect to NPM
-
-also trying to add backup and store database keeps brekaing it as well, might just add backup and restore into admin panel, that admin can restore after upgrade,
-
 # 🔗 LinkPlatform
 
-> **Shorten, track, and manage your links. Create beautiful bio profiles.**
+> Self-hosted link management & bio page platform — your data, your server, no phone-home.
 
-A self-hosted, full-stack link management platform with custom bio profile pages, URL shortening, click analytics, team messaging, 2FA, and a fully themeable public profile system inspired by Kara's Page design.
+**LinkPlatform** is a full-stack, Docker-powered alternative to commercial tools like Bitly and Linktree. Shorten links, track clicks, build beautiful bio profile pages, and manage everything from a clean admin dashboard — all running on your own infrastructure.
 
 ---
 
 ## ✨ Features
 
-### 🔗 Link Management
-- Create short links with custom slugs
-- Click tracking & analytics
-- Landing page builder per link (with custom title, body, image, and theme)
-- QR code generation for every link
-- Enable / disable links instantly
+### 🔗 Link Shortening
+- Short URLs at `/s/CODE` with base62 codes
+- Custom short codes
+- Click tracking per link
+- Toggle links active/inactive
+- Landing page mode (`/l/CODE`) — preview page before redirect
+- QR code generation built in
+- Landing page themes (default, light, dark)
 
-### 🎨 Bio Profile Pages
-- Public profile at `/@yourslug` — visits work without logging in
-- **14 selectable monthly themes** extracted from the Kara Danvers page design (May Flowers default)
-- Vertical `@slug` badge floating left of your avatar
-- Daily status thought-bubble to the right of your avatar
-- Glowing conic-gradient avatar ring
-- Ambient background glow + circuit/binary-rain tech animations
-- Particle effects per theme (petals 🌺, snow ❄️, hearts 💖, bats 🦇, confetti 🎉, fireflies, leaves, stars, bunnies…)
-- Profile tabs with link cards, text blocks, social cards, contact info, video embeds, gallery
+### 🎨 Bio Profile Pages (`/@slug`)
+- Link-in-bio style profile pages
+- 12 built-in seasonal themes (May Flowers, Halloween, Christmas, etc.)
 - Custom HTML/CSS theme override
-- Redirect mode (send visitors to an external URL instead)
-- Show/hide social icon row
-- Profile photo styles: circle, pulse ring, glow, rainbow border, rounded square, square
-- Report profile button
+- Tab system — organize links into sections by type (links, social, contact, text, video, gallery)
+- Per-tab background images, opacity, text color, and style (solid/glass/frost/transparent)
+- Social icon row with custom icons
+- Profile photo with shape (circle/rounded/square) and effect (pulse/glow/rainbow)
+- Header image with half/full/cover banner modes
+- Daily status bubble on profile photo
+- @slug display styles (vertical, horizontal, hidden)
+- Password-protected profiles
+- Sensitive content + age restriction gates
+- Cookie consent popup
+- Verified badge, share button, branding removal
 
-### 💬 Messaging
-- User-to-user inbox/outbox
-- Guest contact form on public profile
-- Reply threading
-- Accept / decline messages toggle per user
+### 🌐 Custom Domains
+- Users can point their own domain to their profile
+- Admin grants per-user custom domain access
+- DNS A-record verification built in
+- Root redirect + custom 404 redirect per domain
+- Short links work on custom domains (`yourdomain.com/s/CODE`)
 
-### 🔐 Security
-- JWT access + refresh token auth
-- Full 2FA (TOTP) with backup codes
-- Password reset via email token
-- Admin ban / suspend / impersonate users
-- Role system: user → moderator → admin
+### 🛡️ Security
+- JWT authentication with refresh tokens
+- Two-factor authentication (TOTP) with backup codes
+- Password reset via email
+- Rate limiting (SlowAPI + NGINX zones)
+- NGINX security headers (X-Frame-Options, X-Content-Type-Options, CSP, etc.)
+- Profile password protection
+- User ban, suspend, and role system (user / moderator / admin)
+- Docker network isolation
 
-### 🛠️ Admin Panel
-- User management (ban, suspend, change role, delete, impersonate)
-- All links view + delete
-- Site config (name, tagline, emoji, footer)
-- Custom navigation manager
-- Page/CMS manager (create custom pages like `/p/contact`)
+### 👑 Admin Dashboard
+- User management (ban, suspend, impersonate, delete)
+- Per-user custom domain access toggle
+- All links overview
+- Platform statistics (users, clicks, profile views, messages, reports)
+- Profile reports — review, dismiss, or delete
+- File upload manager
+- Site settings (name, tagline, footer, emoji)
+- Navigation manager (add/edit/reorder/hide nav items, including external URLs)
+- Pages manager (custom HTML pages at `/p/slug` with SEO metadata)
 - Email template editor
-- SMTP settings (editable at runtime, no restart needed)
-- Profile report review queue
+- SMTP configuration + test email
+
+### 📬 Messaging
+- User-to-user messaging by @slug
+- Guest contact form
+- Inbox, sent, compose tabs
+- Unread count badge in navbar
+- Mark as read / delete
+
+### ⚙️ Infrastructure (Blueprint Edition)
+- Upgrade-safe installer (preserves database and uploads on re-run)
+- Auto-installs Docker on Debian/Ubuntu if missing
+- NGINX reverse proxy with security headers and rate limiting zones
+- Health checks on all Docker services
+- Named volume for uploads (survives container rebuilds)
+- Structured logging with rotation
+- `backup.sh` — one-command database backup (keeps 10 newest)
+- `linkplatform` CLI for managing your instance
 
 ---
 
-## 🗓️ Monthly Themes
-
-Users pick a theme from the Bio Profile editor. No auto-rotation. May Flowers is the default.
-
-| # | Theme | Colors | Effect |
-|---|-------|--------|--------|
-| Jan | ❄️ Winter Frost | Blue · Teal · Purple | Snow |
-| Feb | 💖 Valentine's Love | Red · Pink · Blush | Hearts |
-| Mar | 🍀 St. Patrick's Day | Green · Gold | Fireflies |
-| Apr | 🐰 Easter | Purple · Pink · Gold | Bunnies |
-| May | 🌺 May Flowers *(DEFAULT)* | Pink · Purple · Teal | Petals |
-| Jun | 🌈 Summer Pride | Red · Orange · Blue | Fireflies |
-| Jul | 🇺🇸 4th of July | Red · Blue · Gold | Stars |
-| Aug | 🌅 Summer Heat | Orange · Red · Gold | Fireflies |
-| Sep | 🔧 Labor Day | Amber · Steel Blue | Leaves |
-| Oct | 🎃 Halloween | Purple · Gold · Red | Bats |
-| Nov | 🦃 Thanksgiving | Orange · Brown · Green | Leaves |
-| Dec | 🎄 Christmas | Red · Green · Gold | Snow |
-| — | 🎉 New Year's | Blue · Purple · Teal | Confetti |
-| — | ✏️ Custom | Write your own CSS | — |
-
----
-
-## 🚀 Quick Start
-
-### Prerequisites
-- [Docker](https://docs.docker.com/get-docker/) + Docker Compose
-- `openssl` (pre-installed on most systems)
-
-### Install & Run
+## 🚀 Quick Install
 
 ```bash
-# Download the install script
-curl -O https://your-server/v11.7.2.sh
-# or copy v11.7.2.sh to your machine, then:
-
-chmod +x v11.7.2.sh
-bash v11.7.2.sh
+bash v11_7_9_blueprint.sh
 ```
 
 That's it. The script will:
-1. Check prerequisites
-2. Scaffold the entire project under `~/link-platform/`
-3. Generate a random `SECRET_KEY`
-4. Build and start all Docker containers
-5. Seed the admin user, default nav, pages, and email templates
-
-### Default Credentials
-
-| Field | Value |
-|-------|-------|
-| URL | `http://localhost:3000` |
-| Admin email | `admin@admin.admin` |
-| Admin password | `admin` |
-| API docs | `http://localhost:8000/docs` |
-| Profile preview | `http://localhost:3000/@admin` |
-
-> ⚠️ **Change the admin password immediately after first login.**
+1. Check for Docker (and install it on Debian/Ubuntu if missing)
+2. Detect any existing installation and offer to upgrade safely
+3. Generate a secure `SECRET_KEY` automatically
+4. Build and start all containers
+5. Seed the admin account and default site data
+6. Install the `linkplatform` CLI tool
 
 ---
 
-## ⚙️ Configuration
+## 🐳 Services
 
-Edit the variables at the top of `v11.7.2.sh` before running:
+| Service    | Description                              | Port    |
+|------------|------------------------------------------|---------|
+| `nginx`    | Reverse proxy + security headers         | 80      |
+| `frontend` | React dashboard (Vite dev server)        | 3000    |
+| `backend`  | FastAPI API + redirect engine            | 8000    |
+| `db`       | PostgreSQL 15                            | (internal) |
+
+All services run on an isolated Docker bridge network. The database is not exposed to the host.
+
+---
+
+## 🛠️ CLI Reference
+
+After install, manage your instance with the `linkplatform` command:
+
+```bash
+linkplatform start       # Start all services
+linkplatform stop        # Stop all services
+linkplatform restart     # Restart all services
+linkplatform logs        # Tail backend logs
+linkplatform logs nginx  # Tail nginx logs
+linkplatform status      # Show container status
+linkplatform backup      # Backup PostgreSQL database
+linkplatform update      # Rebuild containers with new code
+linkplatform shell       # Open a backend bash shell
+linkplatform db          # Open a psql shell
+```
+
+---
+
+## 🔧 Configuration
+
+Edit the top of the install script before running:
 
 ```bash
 SITE_NAME="LinkPlatform"
 SITE_EMOJI="🔗"
 SITE_TAGLINE="Shorten, track, and manage your links."
-SITE_FOOTER="© 2026 LinkPlatform. All rights reserved."
-SITE_VERSION="11.7.2"
-
 BACKEND_PORT=8000
 FRONTEND_PORT=3000
-
 ADMIN_EMAIL="admin@admin.admin"
 ADMIN_PASSWORD="admin"
-DEFAULT_THEME_COLOR="#e91e8c"   # May Flowers pink
-
-SMTP_HOST="localhost"
-SMTP_PORT="25"
-SMTP_USER=""
-SMTP_PASSWORD=""
-SMTP_USE_TLS="false"
 ```
 
-SMTP can also be configured at runtime via **Admin → SMTP Settings** without restarting.
+After install, site settings (name, tagline, SMTP, etc.) are editable live from the **Admin → Settings** panel without restarting.
 
 ---
 
-## 🐳 Docker Commands
+## 📦 Database Backups
 
 ```bash
-cd ~/link-platform
+# Manual backup
+linkplatform backup
 
-# View logs
-docker compose logs -f backend
-docker compose logs -f frontend
+# Or directly
+./backup.sh
+```
 
-# Restart all services
-docker compose restart
+Backups are saved to `~/link-platform-backups/db_YYYYMMDD_HHMMSS.sql`. The script automatically prunes to keep the 10 most recent backups.
 
-# Stop everything
-docker compose down
+---
 
-# Full reset (destroys database)
-docker compose down -v && bash v11.7.2.sh
+## 🔑 Default Admin Login
+
+| Field    | Value                |
+|----------|----------------------|
+| Email    | `admin@admin.admin`  |
+| Password | `admin`              |
+
+**Change this immediately after first login** via Admin → Users or My Account.
+
+---
+
+## 📡 API
+
+The full interactive API docs are available at:
+
+```
+http://your-server:8000/docs
+```
+
+Authentication uses Bearer tokens. Get a token:
+
+```bash
+curl -X POST http://your-server:8000/api/auth/login \
+  -d "username=admin@admin.admin&password=admin"
+```
+
+Key endpoints:
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/auth/login` | Login, get JWT |
+| `POST` | `/api/auth/register` | Register new user |
+| `GET`  | `/api/links` | List your links |
+| `POST` | `/api/links` | Create a short link |
+| `GET`  | `/s/{code}` | Redirect (click tracked) |
+| `GET`  | `/l/{code}` | Landing page redirect |
+| `GET`  | `/@{slug}` | Public bio profile page |
+| `GET`  | `/api/admin/stats` | Platform statistics (admin) |
+
+---
+
+## 🗂️ Project Structure
+
+```
+link-platform/
+├── backend/
+│   └── app/
+│       ├── routers/          # auth, links, profile, admin, messages, public...
+│       ├── services/         # business logic (scaffolded)
+│       ├── workers/          # async workers (scaffolded)
+│       ├── templates/        # Jinja2 HTML (public profiles, landing pages)
+│       ├── uploads/          # user-uploaded files (persisted via Docker volume)
+│       ├── models.py         # SQLAlchemy models
+│       ├── schemas.py        # Pydantic schemas
+│       ├── auth.py           # JWT + password utilities
+│       ├── config.py         # Settings via pydantic-settings
+│       ├── database.py       # DB engine + session
+│       ├── email_utils.py    # SMTP + template rendering
+│       └── main.py           # FastAPI app, migrations, seeding
+├── frontend/
+│   └── src/
+│       ├── pages/            # React pages (Dashboard, BioProfile, Admin...)
+│       ├── components/       # Navbar, Toast, LinkCard, EmptyState
+│       ├── context/          # AuthContext, ThemeContext
+│       ├── styles/           # theme.css (light/dark)
+│       ├── api.js            # Axios instance with auto token refresh
+│       └── config.js         # API URL, theme presets, tab types
+├── nginx/
+│   └── nginx.conf            # Reverse proxy + security headers + rate limiting
+├── docker-compose.yml
+├── .env                      # Project-level env (auto-generated)
+├── backup.sh                 # Database backup script
+└── linkplatform              # CLI management tool
 ```
 
 ---
 
-## 🏗️ Architecture
+## 🎨 Themes
 
-```
-~/link-platform/
-├── backend/               # FastAPI (Python 3.11)
-│   ├── app/
-│   │   ├── routers/       # auth, profile, links, admin, messages, public…
-│   │   ├── templates/     # Jinja2 HTML (public profile, landing pages)
-│   │   ├── uploads/       # User-uploaded files (served as /uploads/*)
-│   │   ├── main.py        # FastAPI app, migrations, seeding
-│   │   ├── models.py      # SQLAlchemy models
-│   │   ├── schemas.py     # Pydantic schemas
-│   │   ├── auth.py        # JWT + password hashing
-│   │   ├── config.py      # Pydantic settings
-│   │   └── email_utils.py # SMTP email helpers
-│   ├── Dockerfile
-│   ├── requirements.txt
-│   └── .env
-├── frontend/              # React 18 + Vite
-│   ├── src/
-│   │   ├── pages/         # Dashboard, BioProfile, Admin, Messages…
-│   │   ├── components/    # Navbar, Toast
-│   │   ├── context/       # AuthContext, ThemeContext
-│   │   ├── config.js      # THEME_PRESETS, constants
-│   │   └── api.js         # Axios instance
-│   ├── Dockerfile
-│   └── vite.config.js
-└── docker-compose.yml
-```
+LinkPlatform ships with 14 built-in themes plus a custom CSS mode:
 
-**Stack:**
-- **Backend:** FastAPI · SQLAlchemy · PostgreSQL · python-jose · passlib · pyotp · Jinja2
-- **Frontend:** React 18 · React Router v6 · Axios · Vite
-- **Database:** PostgreSQL 15 (Alpine)
-- **Auth:** JWT (access + refresh tokens) · TOTP 2FA · bcrypt
+| Theme | Season |
+|-------|--------|
+| 🌺 May Flowers | Default |
+| ❄️ Winter Frost | January |
+| 💖 Valentine's Love | February |
+| 🍀 St. Patrick's Day | March |
+| 🐰 Easter | April |
+| 🌈 Summer Pride | June |
+| 🇺🇸 4th of July | July |
+| 🌅 Summer Heat | August |
+| 🔧 Labor Day | September |
+| 🎃 Halloween | October |
+| 🦃 Thanksgiving | November |
+| 🎄 Christmas | December |
+| 🎉 New Year's | Special |
+| ✏️ Custom | Write your own CSS |
 
----
-
-## 📸 Profile Page Design
-
-The public profile at `/@slug` is a server-rendered Jinja2 HTML page (no React dependency). It matches the Kara Danvers page aesthetic:
-
-- Dark glassmorphism card
-- Conic-gradient avatar glow ring
-- `@slug` vertical badge (left) + status thought-bubble (right)
-- Ambient radial glow background
-- Moving circuit lines + binary rain in header
-- Section cards with hover slide effect
-- Particle effects tied to the selected theme
-- SHARE and REPORT action buttons at the bottom
-- Fully responsive (single column on mobile)
+Users select a theme from the Bio Profile editor. Each theme includes colors, particle effects (petals, snow, hearts, bats, confetti, fireflies, leaves, stars, bunnies), and a custom CSS block.
 
 ---
 
 ## 🔒 Security Notes
 
-- The `SECRET_KEY` is auto-generated with `openssl rand -hex 32` on every fresh install
-- Passwords are hashed with bcrypt
-- JWT tokens have configurable expiry (default: 30 min access, 7 day refresh)
-- 2FA uses TOTP (RFC 6238 compliant, works with any authenticator app)
-- Admin actions (ban, impersonate) are role-gated at the API level
-- File uploads are stored server-side under `/uploads/`, served as static files
+- Change the default admin password immediately after install
+- The `SECRET_KEY` is auto-generated with `openssl rand -hex 32` during install
+- SMTP credentials are stored in the database and editable from the admin panel — not hardcoded
+- The database container is not exposed to the host network
+- NGINX rate limiting: 30 req/min on API routes, 60 req/min on redirect routes
+- SlowAPI enforces 200 req/min globally in the FastAPI layer
+- User uploads are validated (images only, 10MB max)
 
 ---
 
-## 📝 License
+## 🖥️ Tech Stack
 
-MIT — do whatever you want, just don't remove the footer credit 🙏
+| Layer | Technology |
+|-------|-----------|
+| Backend | FastAPI, SQLAlchemy, PostgreSQL, Uvicorn |
+| Frontend | React 18, Vite, React Router, Axios |
+| Auth | JWT (python-jose), bcrypt, pyotp (2FA) |
+| Templates | Jinja2 (public bio pages) |
+| Proxy | NGINX |
+| Containers | Docker, Docker Compose |
+| Email | SMTP (configurable), Jinja2 templates |
 
 ---
 
-*Built with ❤️ — LinkPlatform v11.7.2*
+## 📄 License
+
+Self-hosted. No proprietary code copied. Build it, run it, keep your data.
