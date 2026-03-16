@@ -314,6 +314,13 @@ MIT — do whatever you want with it.
 
 \---
 
+## 📄 Future Plans
+
+Payment System
+- Maybe?
+
+\---
+
 *Built with FastAPI · React · PostgreSQL · Redis · Docker*
 
 
