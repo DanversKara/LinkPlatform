@@ -2799,11 +2799,58 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 import socket
 import re
+import urllib.request
+import urllib.error
+import ipaddress
 
 from .. import schemas, models, auth
 from ..database import get_db
+from ..config import settings
 
 router = APIRouter(prefix="/api/domains", tags=["domains"])
+
+# Cloudflare published IPv4 ranges — resolved IPs in these ranges mean the
+# domain is proxied and we can't compare against the server IP directly.
+_CF_RANGES = [
+    "173.245.48.0/20", "103.21.244.0/22", "103.22.200.0/22",
+    "103.31.4.0/22",   "141.101.64.0/18", "108.162.192.0/18",
+    "190.93.240.0/20", "188.114.96.0/20", "197.234.240.0/22",
+    "198.41.128.0/17", "162.158.0.0/15",  "104.16.0.0/13",
+    "104.24.0.0/14",   "172.64.0.0/13",   "131.0.72.0/22",
+]
+_CF_NETS = [ipaddress.ip_network(r) for r in _CF_RANGES]
+
+def _is_cloudflare_ip(ip: str) -> bool:
+    try:
+        addr = ipaddress.ip_address(ip)
+        return any(addr in net for net in _CF_NETS)
+    except Exception:
+        return False
+
+def _get_server_ip() -> str:
+    """Get this machine's outbound IP — reliable regardless of how the
+    request arrived (avoids reading a Cloudflare IP from Host header)."""
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return ""
+
+def _http_reachable(domain: str) -> bool:
+    """Check the domain actually serves our API over HTTP.
+    Works for Cloudflare-proxied domains where the A record shows CF IPs."""
+    try:
+        url = f"http://{domain}/api"
+        req = urllib.request.Request(url, headers={"User-Agent": "LinkPlatform-DomainVerify/1.0"})
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            body = resp.read(512).decode("utf-8", errors="ignore")
+            # Our API root returns {"message": "Welcome to <SITE_NAME> API"}
+            return "message" in body and resp.status == 200
+    except Exception:
+        return False
 
 def _clean_domain(raw: str) -> str:
     """Strip protocol/path and lowercase the domain."""
@@ -2812,13 +2859,40 @@ def _clean_domain(raw: str) -> str:
     d = d.split('/')[0].split('?')[0]
     return d
 
-def _verify_dns(domain: str, server_ip: str) -> bool:
-    """Check if domain A record resolves to this server's IP."""
+def _verify_domain(domain: str) -> tuple[bool, str]:
+    """
+    Two-strategy verification:
+      1. Direct IP match  — domain A record == server IP (standard setup)
+      2. HTTP reachability — domain is Cloudflare-proxied (or other proxy);
+         verify it actually serves this server's API instead.
+    Returns (verified: bool, detail: str)
+    """
+    server_ip = _get_server_ip()
+
     try:
-        resolved = socket.gethostbyname(domain)
-        return resolved == server_ip
+        resolved_ip = socket.gethostbyname(domain)
     except Exception:
-        return False
+        return False, f"Could not resolve {domain} — DNS may not have propagated yet."
+
+    # Strategy 1: direct IP match
+    if server_ip and resolved_ip == server_ip:
+        return True, "IP match"
+
+    # Strategy 2: Cloudflare proxy (or any proxy) — check HTTP reachability
+    if _is_cloudflare_ip(resolved_ip):
+        if _http_reachable(domain):
+            return True, "Cloudflare proxy — HTTP reachability confirmed"
+        return False, (
+            f"{domain} resolves to a Cloudflare IP ({resolved_ip}) but did not "
+            f"respond as this server. Make sure Cloudflare is proxying to {server_ip or 'this server'} "
+            f"and the domain is pointed at the correct origin."
+        )
+
+    # Resolved to a non-CF, non-matching IP — wrong server or propagating
+    return False, (
+        f"{domain} resolves to {resolved_ip} but this server's IP is "
+        f"{server_ip or 'unknown'}. Update your DNS A record."
+    )
 
 # ── User endpoints ──────────────────────────────────────────────────────────
 
@@ -2886,18 +2960,12 @@ def verify_my_domain(request: Request, db: Session = Depends(get_db), current_us
     record = db.query(models.CustomDomain).filter(models.CustomDomain.user_id == current_user.id).first()
     if not record:
         raise HTTPException(404, "No domain configured")
-    # Get server IP to check against
-    try:
-        server_ip = socket.gethostbyname(request.headers.get("host", "localhost").split(":")[0])
-    except Exception:
-        server_ip = ""
-    verified = _verify_dns(record.domain, server_ip)
+    verified, detail = _verify_domain(record.domain)
     record.is_verified = verified
     db.commit()
     db.refresh(record)
     if not verified:
-        fallback = "this server's IP"
-        raise HTTPException(400, f"DNS not pointing to this server yet. Make sure your A record points to {server_ip or fallback}")
+        raise HTTPException(400, detail)
     return record
 
 # ── Admin endpoints ──────────────────────────────────────────────────────────
@@ -4255,7 +4323,11 @@ export default defineConfig({
     port: 3000,
     strictPort: true,
     watch: { usePolling: true },
-    allowedHosts: ['localhost', '127.0.0.1', '__DEPLOY_DOMAIN_PLACEHOLDER__']
+    // allowedHosts: true is safe here — Vite is on the internal Docker network
+    // behind NGINX and never directly exposed to the internet. Must be true (not
+    // the string 'all') — Vite 4.x type is string[] | true. User custom domains
+    // are added dynamically via the DB so cannot be known at install time.
+    allowedHosts: true
   },
   build: {
     rollupOptions: {
@@ -4267,21 +4339,7 @@ export default defineConfig({
   }
 })
 EOF
-
-# ── Patch vite.config.js allowedHosts ────────────────────────────────────────
-# Vite rejects requests from unknown hostnames with "Blocked request. This host
-# is not allowed." We build the allowedHosts list at install time so the domain
-# works immediately without any manual vite.config.js edits.
-_LOCAL_IP=$(hostname -I 2>/dev/null | awk '{print $1}')
-_VITE_HOSTS="'localhost', '127.0.0.1'"
-[ -n "$_LOCAL_IP" ] && _VITE_HOSTS="${_VITE_HOSTS}, '${_LOCAL_IP}'"
-if [ -n "$DEPLOY_DOMAIN" ]; then
-  _VITE_HOSTS="${_VITE_HOSTS}, '${DEPLOY_DOMAIN}', 'www.${DEPLOY_DOMAIN}'"
-fi
-# Replace the placeholder with the full computed list
-sed -i "s|'__DEPLOY_DOMAIN_PLACEHOLDER__'|${_VITE_HOSTS}|" frontend/vite.config.js
-echo "✅ Vite allowedHosts patched: ${_VITE_HOSTS}"
-# ─────────────────────────────────────────────────────────────────────────────
+echo "✅ Vite allowedHosts: true (allows all hosts — safe behind NGINX, correct Vite 4.x type)"
 
 # ---------- frontend/.env ----------
 # VITE_API_BASE_URL is intentionally left empty so all API calls use relative
@@ -6233,7 +6291,8 @@ function DomainTab({ apiBaseUrl }) {
           <code>https://{cleanDomain || 'yourdomain.com'}/@yourslug</code>
         </div>
         <div style={{ marginTop: '.75rem', padding: '.75rem 1rem', background: 'rgba(245,158,11,.08)', borderRadius: 8, borderLeft: '3px solid #f59e0b', fontSize: '.82rem', lineHeight: 1.6 }}>
-          🔶 For HTTPS, use Cloudflare proxy (orange cloud) for automatic SSL.
+          🔶 <strong>Cloudflare users:</strong> Enable the orange cloud proxy for automatic HTTPS/SSL.
+          Verification detects Cloudflare automatically — no need to pause the proxy.
         </div>
       </div>
     </div>
@@ -8725,16 +8784,6 @@ http {
             proxy_set_header Connection "upgrade";
         }
 
-        # Vite dep cache and source files — never let browsers cache stale
-        # chunks; mismatched React versions cause useState null crashes.
-        location ~ ^/(node_modules|src)/ {
-            proxy_pass http://frontend;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            add_header Cache-Control "no-store, no-cache, must-revalidate" always;
-            add_header Pragma "no-cache" always;
-        }
-
         # Profile @slug pages — only alphanumeric slug chars after @.
         # Because /@vite/ and /@react-refresh/ are matched above first,
         # this location only receives real profile slugs.
@@ -9051,9 +9100,9 @@ cat << FINALMSG
   🌐 DEPLOY_DOMAIN — set once at top of script, works across localhost/IP/domain
   🔒 CORS fix — relative API URLs (no origin mismatch regardless of access method)
   🏷️  NGINX server_name — auto-patched to include your domain on deploy
-  ⚡ Vite allowedHosts — auto-patched so domain isn't blocked by Vite dev server
+  ⚡ Vite allowedHosts: true — correct Vite 4.x boolean (string 'all' was blocking everything)
   🐛 FIXED: 503 on dashboard load — NGINX api rate limit was 30r/m (way too low); now 30r/s with burst=50
-  🐛 FIXED: Blank page on domain — NGINX now sends no-cache for /src/ and /node_modules/ so browser never serves stale React chunks
+  🐛 FIXED: Blank page on domain — stale React chunks prevented by vite --force on startup
   🐛 FIXED: useState null / duplicate React — Vite dep cache busted with --force on startup
   🐛 FIXED: Stale Vite cache across rebuilds — .vite dir excluded from bind mount volume
   🐛 FIXED: Nav items missing — /api/public/nav trailing slash 307 redirect now avoided
@@ -9081,7 +9130,7 @@ cat << FINALMSG
   🔑 Admin grants per-user access via Admin → Domains tab
   ⚡ Domain-aware short links — /s/CODE resolves per domain owner
   🏠 Root domain redirect & custom 404 redirect per domain
-  🔍 DNS verification button — checks A record before activating
+  🔶 FIXED: Cloudflare proxied domains stuck on Pending — verification now uses HTTP reachability check when CF IPs detected, falls back to IP match for direct DNS
   📋 DNS setup instructions in user UI and admin panel
   🔒 All previous 11.7.8 fixes also included (DB migrations)
   📊 Admin Statistics Dashboard  — /admin/stats  (users, clicks, profile views, messages, reports)
