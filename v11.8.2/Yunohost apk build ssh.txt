@@ -1,0 +1,1 @@
+karadanvers@browsing:/$ curl -sL "https://github.com/DanversKara/apk_builder_ynh/archive/refs/tags/v1.3.tar.gz" | sha256sum
