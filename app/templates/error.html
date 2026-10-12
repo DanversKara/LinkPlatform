@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}{{ code }} — {{ cfg.site_name }}{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="card auth-card text-center">
+    <div class="empty-state" style="padding: 16px 0;">
+      <svg aria-hidden="true"><use href="#i-alert"/></svg>
+      <h3>{{ code }}</h3>
+      <p>{{ message }}</p>
+      <a class="btn btn-primary" href="/">Back to home</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

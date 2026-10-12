@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Delete link — {{ cfg.site_name }}{% endblock %}
+{% block content %}
+<div class="container-narrow" style="margin:0 auto">
+  <div class="card">
+    <h1 class="mb-2">Delete this link?</h1>
+    <p class="muted mb-4">This permanently deletes <strong>{{ link.title or link.code }}</strong> <span class="mono">/{{ link.code }}</span> and all of its click history ({{ link.clicks_cached }} clicks). This cannot be undone.</p>
+    <form method="post" action="/links/{{ link.id }}/delete">
+      <input type="hidden" name="_csrf" value="{{ csrf }}">
+      <div class="flex gap-2">
+        <button class="btn btn-danger" type="submit"><svg aria-hidden="true"><use href="#i-trash"/></svg>Yes, delete it</button>
+        <a class="btn btn-ghost" href="/links">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

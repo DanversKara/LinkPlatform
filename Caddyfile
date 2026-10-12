@@ -1,0 +1,13 @@
+# LinkPlatform v12 — Caddy edge config (rendered by the installer with your domain).
+# Only used when a DOMAIN is set (docker compose --profile edge).
+{$DOMAIN} {
+    encode gzip
+    reverse_proxy app:8000
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        -Server
+    }
+}

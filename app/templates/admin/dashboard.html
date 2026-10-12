@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Admin — {{ cfg.site_name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Admin</h1><p class="sub">Platform overview and moderation.</p></div>
+</div>
+
+<div class="tabs" role="tablist">
+  <a class="tab active" href="/admin" role="tab" aria-selected="true">Overview</a>
+  <a class="tab" href="/admin/users" role="tab" aria-selected="false">Users</a>
+  <a class="tab" href="/admin/links" role="tab" aria-selected="false">Links</a>
+  <a class="tab" href="/admin/domains" role="tab" aria-selected="false">Domains</a>
+  <a class="tab" href="/admin/reports" role="tab" aria-selected="false">Reports</a>
+  <a class="tab" href="/admin/files" role="tab" aria-selected="false">Files</a>
+  <a class="tab" href="/admin/audit" role="tab" aria-selected="false">Audit log</a>
+  <a class="tab" href="/admin/settings" role="tab" aria-selected="false">Settings</a>
+</div>
+
+<div class="stat-grid">
+  <div class="stat-card"><span class="num">{{ users_count }}</span><span class="lbl">Users</span></div>
+  <div class="stat-card"><span class="num">{{ links_count }}</span><span class="lbl">Links</span></div>
+  <div class="stat-card"><span class="num">{{ clicks_count }}</span><span class="lbl">Clicks</span></div>
+  <div class="stat-card"><span class="num">{{ views_count }}</span><span class="lbl">Bio views</span></div>
+  <div class="stat-card"><span class="num">{{ reports_open }}</span><span class="lbl">Open reports</span></div>
+</div>
+
+<div class="card chart-card mb-5">
+  <div class="card-head"><h2>Clicks — last 30 days</h2></div>
+  {% if chart_svg %}{{ chart_svg|safe }}{% else %}<div class="empty-state"><svg aria-hidden="true"><use href="#i-chart"/></svg><p>No click data yet.</p></div>{% endif %}
+</div>
+
+<div class="card">
+  <div class="card-head"><h2>Recent audit activity</h2><a class="btn btn-ghost btn-sm" href="/admin/audit">Full log</a></div>
+  {% if audit_lines %}
+  <div class="table-wrap" style="border:0">
+    <table class="table">
+      <thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Detail</th></tr></thead>
+      <tbody>
+        {% for a in audit_lines %}
+        <tr><td class="muted small">{{ a.ts }}</td><td class="small">{{ a.actor_email or 'system' }}</td><td><span class="badge badge-muted">{{ a.action }}</span></td><td class="small muted ellipsis" title="{{ a.detail }}">{{ a.detail or '—' }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}<p class="muted">No audit entries yet.</p>{% endif %}
+</div>
+{% endblock %}

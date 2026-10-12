@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+# linkplatform — CLI for managing your LinkPlatform v12 install.
+#   linkplatform {start|stop|restart|logs [service]|status|backup|update|shell|health|version}
+# Honors LP_DIR (default: $HOME/linkplatform).
+set -euo pipefail
+
+LP_VERSION="12.0.0"
+LP_DIR="${LP_DIR:-$HOME/linkplatform}"
+
+die()     { echo "ERROR: $*" >&2; exit 1; }
+need_dir(){ [ -d "$LP_DIR" ] || die "install dir not found: $LP_DIR (override with LP_DIR=...)"; }
+
+# Run compose in the install dir, enabling the Caddy edge profile
+# automatically when a DOMAIN is configured in .env.
+compose_bin() {
+    if docker compose version >/dev/null 2>&1; then echo "docker compose";
+    elif command -v docker-compose >/dev/null 2>&1; then echo "docker-compose";
+    else return 1; fi
+}
+compose() {
+    need_dir
+    local cc prof=()
+    cc="$(compose_bin)" || die "docker compose not found (install docker-compose-plugin or enable Docker Desktop's WSL integration)"
+    if [ -f "$LP_DIR/.env" ] && grep -Eq '^DOMAIN=[^[:space:]#]+' "$LP_DIR/.env"; then
+        prof=(--profile edge)
+    fi
+    # shellcheck disable=SC2086
+    ( cd "$LP_DIR" && $cc "${prof[@]}" "$@" )
+}
+
+app_port() {
+    local p=""
+    [ -f "$LP_DIR/.env" ] && p="$(grep -E '^APP_PORT=' "$LP_DIR/.env" | cut -d= -f2- || true)"
+    echo "${p:-8000}"
+}
+
+cmd_start()   { echo "Starting LinkPlatform..."; compose up -d; echo "done."; }
+cmd_stop()    { echo "Stopping LinkPlatform..."; compose down; echo "done."; }
+cmd_restart() { echo "Restarting LinkPlatform..."; compose restart; echo "done."; }
+cmd_logs()    {
+    if [ -n "${1:-}" ]; then compose logs -f --tail=200 "$1"
+    else compose logs -f --tail=200; fi
+}
+cmd_status()  { compose ps; }
+cmd_backup()  { need_dir; exec "$LP_DIR/scripts/backup.sh" "$LP_DIR"; }
+cmd_update()  { need_dir; exec "$LP_DIR/scripts/update.sh" "$LP_DIR"; }
+cmd_shell()   { echo "Opening a shell in the app container (type 'exit' to leave)..."; compose exec app /bin/sh; }
+cmd_health()  { curl -fsS "http://127.0.0.1:$(app_port)/api/health"; echo; }
+cmd_version() {
+    echo "linkplatform CLI $LP_VERSION"
+    local v
+    v="$(curl -fsS "http://127.0.0.1:$(app_port)/api/health" 2>/dev/null \
+        | python3 -c "import json,sys; print(json.load(sys.stdin).get('version','unknown'))" 2>/dev/null || true)"
+    echo "app: ${v:-unreachable}"
+}
+
+usage() {
+    cat <<EOF
+Usage: linkplatform <command>
+
+  start            Start all services
+  stop             Stop all services
+  restart          Restart all services
+  logs [service]   Follow logs (optionally one service, e.g. 'app' or 'caddy')
+  status           Show container status
+  backup           Back up the data volume to ~/linkplatform/backups/
+  update           Rebuild the app image and restart (data is preserved)
+  shell            Open a shell inside the app container
+  health           Check the app health endpoint
+  version          Show CLI and app versions
+
+Environment: LP_DIR (default: \$HOME/linkplatform)
+EOF
+}
+
+case "${1:-}" in
+    start|stop|restart|status|backup|update|shell|health|version)
+        "cmd_$1" ;;
+    logs)
+        shift; cmd_logs "${1:-}" ;;
+    ""|-h|--help|help)
+        usage ;;
+    *)
+        die "unknown command: $1 (try: linkplatform help)" ;;
+esac

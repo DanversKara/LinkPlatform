@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+{% block title %}Bio page editor — {{ cfg.site_name }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/css/bio-edit.css?v={{ sv }}">{% endblock %}
+
+{# ---------------------------------------------------------------- #}
+{# Shared fields for the "add item" form and each item's edit form.  #}
+{# ---------------------------------------------------------------- #}
+{% macro link_fields(prefix, it=None) %}
+{% set kind = it.kind if it else 'link' %}
+<fieldset class="be-kinds" data-kind-picker>
+  <legend class="label">Type</legend>
+  <div class="be-kind-grid">
+    {% for k, label, help in link_kinds %}
+    <label class="be-kind">
+      <input type="radio" name="kind" value="{{ k }}"{% if k == kind %} checked{% endif %}>
+      <span class="be-kind-card"><strong>{{ label }}</strong><span>{{ help }}</span></span>
+    </label>
+    {% endfor %}
+  </div>
+</fieldset>
+<div class="grid grid-2 gap-3">
+  <div class="field">
+    <label class="label" for="{{ prefix }}-title" data-label-for-kind='{"notice_warn":"Heading","notice_info":"Heading"}'>Title</label>
+    <input class="input" type="text" id="{{ prefix }}-title" name="title" maxlength="100" required value="{{ it.title if it else '' }}" placeholder="e.g. YouTube">
+  </div>
+  <div class="field" data-show-kinds="link notice_warn notice_info">
+    <label class="label" for="{{ prefix }}-url">URL <span class="muted small" data-show-kinds="notice_warn notice_info">(optional — makes the heading a link)</span></label>
+    <input class="input" type="text" inputmode="url" id="{{ prefix }}-url" name="url" maxlength="500" value="{{ it.url if it else '' }}" placeholder="https://… or mailto:…" autocomplete="off">
+  </div>
+</div>
+<div class="field">
+  <label class="label" for="{{ prefix }}-desc" data-label-for-kind='{"link":"Description (optional)","text":"Description (optional)","copy":"Text to copy","notice_warn":"Message","notice_info":"Message"}'>Description (optional)</label>
+  <textarea class="textarea be-desc" id="{{ prefix }}-desc" name="description" maxlength="600" rows="2" data-counter placeholder="A short line under the title">{{ it.desc if it else '' }}</textarea>
+</div>
+<div class="grid grid-2 gap-3">
+  <div class="field">
+    <label class="label" for="{{ prefix }}-section">Section</label>
+    <input class="input" type="text" id="{{ prefix }}-section" name="section" maxlength="60" list="bio-sections" value="{{ it.section if it else (section_names[0] if section_names else '') }}" placeholder="e.g. Social Media">
+    <div class="be-chips" data-section-chips="{{ prefix }}-section">
+      {% for s in section_names %}<button type="button" class="be-chip" data-value="{{ s }}">{{ s }}</button>{% endfor %}
+    </div>
+  </div>
+  <div class="field" data-show-kinds="link copy text">
+    <span class="label">Icon &amp; colour</span>
+    <div class="be-iconrow">
+      <span class="be-tile" data-icon-preview{% if it and it.color %} style="--ic:{{ it.color }}"{% endif %}>{% if it %}{{ it.svg|safe }}{% else %}{{ bio_icons['link']|safe }}{% endif %}</span>
+      <select class="select be-icon-select" name="icon" aria-label="Icon">
+        {% for o in icon_opts %}<option value="{{ o.key }}"{% if it and it.icon_key == o.key %} selected{% endif %}>{{ o.label }}</option>{% endfor %}
+      </select>
+      <button type="button" class="btn btn-ghost btn-sm be-pick-icon" hidden>Browse</button>
+    </div>
+    <div class="be-colorrow">
+      <label class="switch small"><input type="checkbox" name="use_color" value="1"{% if it and it.custom_color %} checked{% endif %}><span class="track"></span><span>Custom colour</span></label>
+      <input class="be-color" type="color" name="color" value="{{ (it.custom_color if it and it.custom_color else (it.color if it and it.color else '#2ecc71')) }}" aria-label="Icon colour">
+    </div>
+  </div>
+</div>
+{% endmacro %}
+
+{% block content %}
+<div class="be-head">
+  <div class="be-head-id">
+    <span class="be-head-avatar">{% if user.avatar_path %}<img src="{{ user.avatar_path }}" alt="">{% else %}{{ (user.display_name or 'U')[0]|upper }}{% endif %}</span>
+    <div>
+      <h1>Bio page{% if user.is_verified %} <span class="be-verified" title="Verified by an admin">{{ verified_svg|safe }} Verified</span>{% endif %}</h1>
+      <div class="be-url">
+        <a href="/@{{ user.slug }}" target="_blank" rel="noopener" class="mono">{{ cfg.base_url }}/@{{ user.slug }}</a>
+        <button type="button" class="icon-btn be-mini" data-copy="{{ cfg.base_url }}/@{{ user.slug }}" title="Copy link" aria-label="Copy link to your bio page"><svg aria-hidden="true"><use href="#i-copy"/></svg></button>
+      </div>
+    </div>
+  </div>
+  <div class="be-head-stats">
+    <span><strong>{{ stats.visible }}</strong> visible</span>
+    <span><strong>{{ stats.total - stats.visible }}</strong> hidden</span>
+    <span><strong>{{ stats.sections }}</strong> sections</span>
+    <a class="btn btn-primary btn-sm" href="/@{{ user.slug }}" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#i-external"/></svg>View page</a>
+  </div>
+</div>
+
+{% if errors and errors.get('form') %}
+<div class="alert alert-error" role="alert"><svg aria-hidden="true"><use href="#i-alert"/></svg><span>{{ errors.get('form') }}</span></div>
+{% endif %}
+
+<div class="be-layout">
+  <div class="be-main">
+    <nav class="be-tabs" role="tablist" aria-label="Editor sections">
+      <a class="be-tab{% if tab == 'profile' %} on{% endif %}" href="?tab=profile" role="tab" data-tab="profile" aria-selected="{{ 'true' if tab == 'profile' else 'false' }}"><svg aria-hidden="true"><use href="#i-user"/></svg>Profile</a>
+      <a class="be-tab{% if tab == 'appearance' %} on{% endif %}" href="?tab=appearance" role="tab" data-tab="appearance" aria-selected="{{ 'true' if tab == 'appearance' else 'false' }}"><svg aria-hidden="true"><use href="#i-sun"/></svg>Appearance</a>
+      <a class="be-tab{% if tab == 'links' %} on{% endif %}" href="?tab=links" role="tab" data-tab="links" aria-selected="{{ 'true' if tab == 'links' else 'false' }}"><svg aria-hidden="true"><use href="#i-link"/></svg>Links <span class="be-count">{{ stats.total }}</span></a>
+    </nav>
+
+    {# ====================== PROFILE + APPEARANCE (one form) ====================== #}
+    <form method="post" action="/bio" enctype="multipart/form-data" novalidate id="profileForm" data-dirty-form>
+      <input type="hidden" name="_csrf" value="{{ csrf }}">
+      <input type="hidden" name="prefs_present" value="1">
+      <input type="hidden" name="_return_tab" value="{{ tab if tab != 'links' else 'profile' }}" id="returnTab">
+
+      <section class="be-panel" data-panel="profile" role="tabpanel"{% if tab != 'profile' %} data-inactive{% endif %}>
+        <div class="card">
+          <div class="be-avatar-edit">
+            <div class="be-avatar-big" id="avatarPreview">{% if user.avatar_path %}<img src="{{ user.avatar_path }}" alt="Current photo">{% else %}<span>{{ (user.display_name or 'U')[0]|upper }}</span>{% endif %}</div>
+            <div>
+              <div class="label">Profile photo</div>
+              <div class="flex gap-2 items-center" style="flex-wrap:wrap">
+                <label class="btn btn-ghost btn-sm" for="avatar"><svg aria-hidden="true"><use href="#i-plus"/></svg>{{ 'Replace photo' if user.avatar_path else 'Upload photo' }}</label>
+                <input class="be-file" type="file" id="avatar" name="avatar" accept="image/png,image/jpeg,image/webp,image/gif">
+                {% if user.avatar_path %}<label class="switch small"><input type="checkbox" name="remove_avatar" value="1"><span class="track"></span><span>Remove</span></label>{% endif %}
+              </div>
+              <div class="hint">Square image works best. PNG, JPG, WebP or GIF, up to 2 MB.</div>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div class="grid grid-2 gap-3">
+            <div class="field">
+              <label class="label" for="display_name">Display name</label>
+              <input class="input" type="text" id="display_name" name="display_name" maxlength="80" required value="{{ user.display_name }}" data-preview-key="name">
+            </div>
+            <div class="field">
+              <label class="label" for="slug">Handle</label>
+              <div class="be-prefix"><span>/@</span><input class="input mono" type="text" id="slug" name="slug" maxlength="30" pattern="[a-z0-9_]{3,30}" required value="{{ user.slug }}" autocapitalize="off" spellcheck="false"></div>
+              <div class="hint">3–30 lowercase letters, numbers or _. Changing it changes your link.</div>
+            </div>
+          </div>
+          <div class="field">
+            <div class="flex justify-between items-center"><label class="label" for="bio">Tagline</label><button type="button" class="be-linkbtn" data-insert="bio" data-text=" • ">Insert •</button></div>
+            <textarea class="textarea" id="bio" name="bio" maxlength="500" rows="2" data-counter data-preview-key="bio" placeholder="Content Creator • Tech Enthusiast • Holiday Lover">{{ user.bio or '' }}</textarea>
+            <div class="hint">Shown under your name. Separate roles with • for the karas.page look.</div>
+          </div>
+          <div class="field">
+            <label class="label" for="pref_footer_text">Footer text</label>
+            <input class="input" type="text" id="pref_footer_text" name="pref_footer_text" maxlength="140" value="{{ prefs.footer_text }}" placeholder="© {{ now_year }} {{ user.display_name }}" data-preview-key="footer">
+            <div class="hint">Leave blank for “© year + your name”.</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="be-panel" data-panel="appearance" role="tabpanel"{% if tab != 'appearance' %} data-inactive{% endif %}>
+        <div class="card">
+          <div class="card-head"><h2>Theme</h2><span class="hint" style="margin:0">Every theme re-tints the landscape, cards and effects.</span></div>
+          <div class="be-themes">
+            {% for t in THEMES %}
+            {% set pal = palettes.get(t.id) %}
+            <label class="be-theme">
+              <input type="radio" name="theme" value="{{ t.id }}"{% if (user.theme or 'default') == t.id %} checked{% endif %}>
+              <span class="be-theme-card">
+                {% if t.id == 'seasonal' %}
+                <span class="be-swatch be-swatch-seasonal" aria-hidden="true"></span>
+                {% else %}
+                <span class="be-swatch" style="--s-bg:{{ pal.bg }};--s-p:{{ pal.primary }};--s-s:{{ pal.secondary }};--s-a:{{ pal.accent }}" aria-hidden="true"><i></i><i></i><i></i></span>
+                {% endif %}
+                <span class="be-theme-name">{{ t.name.split(' (')[0] }}</span>
+                {% if t.id == 'seasonal' %}<span class="be-theme-sub">Holiday theme each month</span>{% endif %}
+              </span>
+            </label>
+            {% endfor %}
+          </div>
+          <div class="divider"></div>
+          <div class="be-toggle-row">
+            <div><strong>Custom accent colour</strong><div class="hint" style="margin:2px 0 0">Override the theme's main colour.</div></div>
+            <div class="flex items-center gap-2">
+              <input class="be-color" type="color" id="accent_color" name="accent_color" value="{{ user.accent_color or '#2ecc71' }}" aria-label="Accent colour">
+              <label class="switch"><input type="checkbox" name="pref_custom_accent" value="1"{% if prefs.custom_accent %} checked{% endif %} aria-label="Use custom accent colour"><span class="track"></span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2>Background &amp; motion</h2></div>
+          {% for key, title, sub in [
+            ("scene", "Animated landscape", "Sky, sun, clouds, city, road and trees behind your page."),
+            ("tech", "Tech animation in header", "Grid, circuit lines and binary rain inside the header card."),
+            ("seasonal_tagline", "Holiday tagline", "With the Seasonal theme, swap your tagline for the month's greeting."),
+          ] %}
+          <div class="be-toggle-row">
+            <div><strong>{{ title }}</strong><div class="hint" style="margin:2px 0 0">{{ sub }}</div></div>
+            <label class="switch"><input type="checkbox" name="pref_{{ key }}" value="1"{% if prefs[key] %} checked{% endif %} aria-label="{{ title }}"><span class="track"></span></label>
+          </div>
+          {% endfor %}
+          <div class="grid grid-2 gap-3 mt-4">
+            <div class="field">
+              <label class="label" for="pref_effects">Particle effect</label>
+              <select class="select" id="pref_effects" name="pref_effects">
+                {% for k, label in effects %}<option value="{{ k }}"{% if prefs.effects == k %} selected{% endif %}>{{ label }}</option>{% endfor %}
+              </select>
+            </div>
+            <div class="field">
+              <span class="label">Card layout</span>
+              <div class="be-seg">
+                <label><input type="radio" name="pref_layout" value="grid"{% if prefs.layout == 'grid' %} checked{% endif %}><span>Grid</span></label>
+                <label><input type="radio" name="pref_layout" value="list"{% if prefs.layout == 'list' %} checked{% endif %}><span>List</span></label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2>Page elements</h2></div>
+          <div class="be-check-grid">
+            {% for key, title in [("show_share","Share button"),("show_report","Report button"),("show_date","Today's date"),("show_a11y","Accessibility toolbar")] %}
+            <label class="be-check"><input type="checkbox" class="checkbox" name="pref_{{ key }}" value="1"{% if prefs[key] %} checked{% endif %}><span>{{ title }}</span></label>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+
+      <div class="be-savebar" data-savebar>
+        <span class="be-savebar-msg" data-savebar-msg>Changes to profile &amp; appearance are saved together.</span>
+        <div class="flex gap-2">
+          <button type="reset" class="btn btn-ghost btn-sm" data-discard hidden>Discard</button>
+          <button class="btn btn-primary" type="submit"><svg aria-hidden="true"><use href="#i-check"/></svg>Save changes</button>
+        </div>
+      </div>
+    </form>
+
+    {# ====================== LINKS ====================== #}
+    <section class="be-panel" data-panel="links" role="tabpanel"{% if tab != 'links' %} data-inactive{% endif %}>
+      <details class="card be-add"{% if not items %} open{% endif %} id="addItem">
+        <summary class="be-add-summary"><span class="be-add-plus"><svg aria-hidden="true"><use href="#i-plus"/></svg></span><span><strong>Add an item</strong><span class="hint" style="display:block;margin:0">Link, copy card, info card or notice</span></span></summary>
+        <form method="post" action="/bio/links" novalidate class="be-linkform" data-link-form>
+          <input type="hidden" name="_csrf" value="{{ csrf }}">
+          {{ link_fields('new') }}
+          <div class="form-row"><span></span><button class="btn btn-primary" type="submit"><svg aria-hidden="true"><use href="#i-plus"/></svg>Add to page</button></div>
+        </form>
+      </details>
+
+      {% if items %}
+      <p class="hint be-reorder-hint">Drag <span class="be-grip-demo">⋮⋮</span> to reorder or move between sections (or focus it and use ↑ ↓).</p>
+      <div class="be-sections" id="linkSections">
+        {% for sec in sections %}
+        <div class="be-section" data-section="{{ sec.name }}">
+          <div class="be-section-head">
+            <span class="be-section-ico" aria-hidden="true">{{ sec.svg|safe }}</span>
+            <h3>{{ sec.name or 'No section' }}</h3>
+            <span class="be-count">{{ sec.entries|length }}</span>
+          </div>
+          <ul class="be-list" data-dropzone>
+            {% for it in sec.entries %}
+            <li class="be-item{% if not it.active %} is-hidden{% endif %}" id="link-{{ it.id }}" data-id="{{ it.id }}">
+              <details class="be-item-details">
+                <summary class="be-item-row">
+                  <button type="button" class="be-grip" aria-label="Reorder {{ it.title }}" title="Drag to reorder" data-grip>⋮⋮</button>
+                  <span class="be-tile{% if it.kind in ('notice_warn','notice_info') %} be-tile-{{ it.kind }}{% endif %}" style="{% if it.color %}--ic:{{ it.color }}{% endif %}">{% if it.kind == 'notice_warn' %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01"/></svg>{% elif it.kind == 'notice_info' %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>{% else %}{{ it.svg|safe }}{% endif %}</span>
+                  <span class="be-item-text">
+                    <strong class="truncate">{{ it.title }}</strong>
+                    <span class="tiny muted truncate">{% if it.kind == 'link' %}{{ it.url }}{% else %}{{ it.desc or it.url }}{% endif %}</span>
+                  </span>
+                  {% if it.kind != 'link' %}<span class="tag be-kind-tag">{{ {'copy':'Copy','text':'Info','notice_warn':'Warning','notice_info':'Note'}[it.kind] }}</span>{% endif %}
+                  {% if not it.active %}<span class="tag tag-dim">Hidden</span>{% endif %}
+                  <span class="be-edit-btn"><svg aria-hidden="true"><use href="#i-edit"/></svg><span>Edit</span></span>
+                </summary>
+                <form method="post" action="/bio/links/{{ it.id }}/edit" novalidate class="be-linkform be-editform" data-link-form>
+                  <input type="hidden" name="_csrf" value="{{ csrf }}">
+                  {{ link_fields('l' ~ it.id, it) }}
+                  <div class="form-row">
+                    <label class="switch"><input type="checkbox" name="is_active" value="1"{% if it.active %} checked{% endif %}><span class="track"></span><span>Visible on page</span></label>
+                    <button class="btn btn-primary btn-sm" type="submit">Save</button>
+                  </div>
+                </form>
+              </details>
+              <div class="be-item-actions">
+                <form method="post" action="/bio/links/{{ it.id }}/toggle" data-toggle-form><input type="hidden" name="_csrf" value="{{ csrf }}"><button class="icon-btn be-mini" title="{{ 'Hide' if it.active else 'Show' }}" aria-label="{{ 'Hide' if it.active else 'Show' }} {{ it.title }}" aria-pressed="{{ 'false' if it.active else 'true' }}"><svg aria-hidden="true"><use href="#i-eye"/></svg></button></form>
+                <form method="post" action="/bio/links/{{ it.id }}/move" class="be-move"><input type="hidden" name="_csrf" value="{{ csrf }}"><input type="hidden" name="direction" value="up"><button class="icon-btn be-mini" title="Move up" aria-label="Move {{ it.title }} up"><svg aria-hidden="true"><use href="#i-arrow-up"/></svg></button></form>
+                <form method="post" action="/bio/links/{{ it.id }}/move" class="be-move"><input type="hidden" name="_csrf" value="{{ csrf }}"><input type="hidden" name="direction" value="down"><button class="icon-btn be-mini" title="Move down" aria-label="Move {{ it.title }} down"><svg aria-hidden="true"><use href="#i-arrow-down"/></svg></button></form>
+                <form method="post" action="/bio/links/{{ it.id }}/delete" data-confirm="Remove “{{ it.title }}” from your bio page?"><input type="hidden" name="_csrf" value="{{ csrf }}"><button class="icon-btn be-mini danger" title="Delete" aria-label="Delete {{ it.title }}"><svg aria-hidden="true"><use href="#i-trash"/></svg></button></form>
+              </div>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="be-empty">
+        <svg aria-hidden="true"><use href="#i-link"/></svg>
+        <p><strong>Your page has no links yet.</strong><br><span class="muted">Add your first one above — try a “Social Media” section; those also show as icons under your name.</span></p>
+      </div>
+      {% endif %}
+      <datalist id="bio-sections">{% for s in section_names %}<option value="{{ s }}"></option>{% endfor %}</datalist>
+    </section>
+  </div>
+
+  {# ====================== LIVE PREVIEW ====================== #}
+  <aside class="be-preview" aria-label="Live preview">
+    <div class="be-preview-bar">
+      <span class="be-dot-live"></span><strong>Live preview</strong>
+      <span class="hint" style="margin:0 0 0 auto" data-preview-state>Updates as you type</span>
+      <button type="button" class="icon-btn be-mini" data-preview-reload title="Reload preview" aria-label="Reload preview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.4L21 8M21 3v5h-5"/></svg></button>
+    </div>
+    <div class="be-phone">
+      <iframe src="/@{{ user.slug }}?preview=1" title="Preview of your bio page" id="previewFrame" loading="lazy"></iframe>
+    </div>
+  </aside>
+</div>
+
+{# Visual icon picker (one shared dialog; enhances the <select>s above) #}
+<dialog class="be-dialog" id="iconPicker" aria-labelledby="iconPickerTitle">
+  <div class="be-dialog-head"><h3 id="iconPickerTitle">Choose an icon</h3><button type="button" class="icon-btn be-mini" data-close-dialog aria-label="Close"><svg aria-hidden="true"><use href="#i-x"/></svg></button></div>
+  <input class="input" type="search" placeholder="Search icons…" data-icon-search aria-label="Search icons">
+  <div class="be-icon-grid">
+    {% for o in icon_opts %}
+    <button type="button" class="be-icon-opt" data-icon="{{ o.key }}" data-label="{{ o.label|lower }}" title="{{ o.label }}" style="--ic:{{ o.color or 'var(--primary)' }}">
+      <span class="be-tile">{% if o.svg %}{{ o.svg|safe }}{% else %}<span class="be-auto">AUTO</span>{% endif %}</span><span class="be-icon-name">{{ o.label }}</span>
+    </button>
+    {% endfor %}
+  </div>
+</dialog>
+
+<script type="application/json" id="bioPalettes">{{ palette_json|safe }}</script>
+<script type="application/json" id="bioIconData">{{ icon_opts|tojson }}</script>
+{% endblock %}
+{% block scripts %}<script src="/static/js/bio-edit.js?v={{ sv }}"></script>{% endblock %}

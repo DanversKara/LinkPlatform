@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Admin — Settings — {{ cfg.site_name }}{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Site settings</h1><p class="sub">Branding, registration, and mail configuration.</p></div></div>
+
+<div class="tabs" role="tablist">
+  <a class="tab" href="/admin" role="tab" aria-selected="false">Overview</a>
+  <a class="tab" href="/admin/users" role="tab" aria-selected="false">Users</a>
+  <a class="tab" href="/admin/links" role="tab" aria-selected="false">Links</a>
+  <a class="tab" href="/admin/domains" role="tab" aria-selected="false">Domains</a>
+  <a class="tab" href="/admin/reports" role="tab" aria-selected="false">Reports</a>
+  <a class="tab" href="/admin/files" role="tab" aria-selected="false">Files</a>
+  <a class="tab" href="/admin/audit" role="tab" aria-selected="false">Audit log</a>
+  <a class="tab active" href="/admin/settings" role="tab" aria-selected="true">Settings</a>
+</div>
+
+{% if error %}
+<div class="alert alert-error" role="alert"><svg aria-hidden="true"><use href="#i-alert"/></svg><span>{{ error }}</span></div>
+{% endif %}
+
+<form method="post" action="/admin/settings" novalidate>
+  <input type="hidden" name="_csrf" value="{{ csrf }}">
+  <div class="grid grid-2 gap-4" style="align-items:start">
+    <div class="card">
+      <div class="card-head"><h2>General</h2></div>
+      <div class="field">
+        <label class="label" for="site_name">Site name</label>
+        <input class="input" type="text" id="site_name" name="site_name" maxlength="80" required value="{{ cfg.site_name }}">
+      </div>
+      <div class="field">
+        <label class="label" for="site_tagline">Tagline</label>
+        <input class="input" type="text" id="site_tagline" name="site_tagline" maxlength="160" value="{{ cfg.site_tagline }}">
+      </div>
+      <div class="field">
+        <label class="label" for="server_ip">Server IP</label>
+        <input class="input mono" type="text" id="server_ip" name="server_ip" maxlength="64" value="{{ cfg.server_ip or '' }}" placeholder="203.0.113.10">
+        <div class="hint">Shown in domain DNS setup instructions.</div>
+      </div>
+      <div class="field">
+        <label class="label" for="click_retention_days">Click data retention (days)</label>
+        <input class="input" type="number" id="click_retention_days" name="click_retention_days" min="1" max="3650" value="{{ cfg.click_retention_days or 365 }}">
+        <div class="hint">Raw click records older than this are purged automatically.</div>
+      </div>
+      <div class="check-row">
+        <input class="checkbox" type="checkbox" id="registration_open" name="registration_open" value="1" {% if cfg.registration_open %}checked{% endif %}>
+        <div><label class="label" for="registration_open">Registration open</label><div class="hint">When off, new accounts can only be created by an admin.</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>SMTP (outgoing mail)</h2></div>
+      <div class="form-grid">
+        <div class="field">
+          <label class="label" for="smtp_host">Host</label>
+          <input class="input mono" type="text" id="smtp_host" name="smtp_host" maxlength="255" value="{{ cfg.smtp_host or '' }}" placeholder="smtp.example.com">
+        </div>
+        <div class="field">
+          <label class="label" for="smtp_port">Port</label>
+          <input class="input" type="number" id="smtp_port" name="smtp_port" min="1" max="65535" value="{{ cfg.smtp_port or 587 }}">
+        </div>
+        <div class="field full">
+          <label class="label" for="smtp_from">From address</label>
+          <input class="input" type="email" id="smtp_from" name="smtp_from" maxlength="255" value="{{ cfg.smtp_from or '' }}" placeholder="noreply@example.com">
+        </div>
+        <div class="field">
+          <label class="label" for="smtp_user">Username</label>
+          <input class="input" type="text" id="smtp_user" name="smtp_user" maxlength="255" value="{{ cfg.smtp_user or '' }}" autocomplete="off">
+        </div>
+        <div class="field">
+          <label class="label" for="smtp_password">Password</label>
+          <input class="input" type="password" id="smtp_password" name="smtp_password" maxlength="255" value="" autocomplete="new-password" placeholder="Leave blank to keep current">
+        </div>
+      </div>
+      <p class="hint">Used for password resets and notifications. Leave the password blank to keep the stored one.</p>
+    </div>
+  </div>
+  <div class="mt-4"><button class="btn btn-primary" type="submit">Save settings</button></div>
+</form>
+{% endblock %}

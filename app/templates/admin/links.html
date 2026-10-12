@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Admin — Links — {{ cfg.site_name }}{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>All links</h1><p class="sub">{{ total }} link{{ 's' if total != 1 }}</p></div></div>
+
+<div class="tabs" role="tablist">
+  <a class="tab" href="/admin" role="tab" aria-selected="false">Overview</a>
+  <a class="tab" href="/admin/users" role="tab" aria-selected="false">Users</a>
+  <a class="tab active" href="/admin/links" role="tab" aria-selected="true">Links</a>
+  <a class="tab" href="/admin/domains" role="tab" aria-selected="false">Domains</a>
+  <a class="tab" href="/admin/reports" role="tab" aria-selected="false">Reports</a>
+  <a class="tab" href="/admin/files" role="tab" aria-selected="false">Files</a>
+  <a class="tab" href="/admin/audit" role="tab" aria-selected="false">Audit log</a>
+  <a class="tab" href="/admin/settings" role="tab" aria-selected="false">Settings</a>
+</div>
+
+<form class="search-bar" method="get" action="/admin/links" role="search">
+  <input class="input" type="search" name="q" placeholder="Search slug, title, URL, or owner…" value="{{ q or '' }}" aria-label="Search links">
+  <button class="btn btn-ghost" type="submit"><svg aria-hidden="true"><use href="#i-search"/></svg>Search</button>
+</form>
+
+{% if links %}
+<div class="card card-flat" style="padding:0">
+  <div class="table-wrap" style="border:0">
+    <table class="table">
+      <thead><tr><th>Link</th><th>Destination</th><th>Owner</th><th class="text-right">Clicks</th><th>Status</th><th class="text-right">Actions</th></tr></thead>
+      <tbody>
+        {% for l in links %}
+        <tr>
+          <td><span class="mono strong">/{{ l.code }}</span>{% if l.title %}<br><span class="tiny muted">{{ l.title }}</span>{% endif %}</td>
+          <td class="ellipsis small muted" title="{{ l.original_url }}">{{ l.original_url }}</td>
+          <td class="small">{{ l.owner_email }}</td>
+          <td class="num text-right strong">{{ l.clicks_cached }}</td>
+          <td>{% if l.is_active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-muted">Disabled</span>{% endif %}</td>
+          <td>
+            <div class="table-actions">
+              <form method="post" action="/admin/links/{{ l.id }}/toggle" style="margin:0"><input type="hidden" name="_csrf" value="{{ csrf }}"><button class="btn btn-ghost btn-sm" type="submit">{% if l.is_active %}Disable{% else %}Enable{% endif %}</button></form>
+              <form method="post" action="/admin/links/{{ l.id }}/delete" data-confirm="Delete link /{{ l.code }} and its click history?" style="margin:0"><input type="hidden" name="_csrf" value="{{ csrf }}"><button class="icon-btn danger" title="Delete" aria-label="Delete link {{ l.code }}"><svg aria-hidden="true"><use href="#i-trash"/></svg></button></form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card"><div class="empty-state"><svg aria-hidden="true"><use href="#i-link"/></svg><p>No links found.</p></div></div>
+{% endif %}
+{% endblock %}

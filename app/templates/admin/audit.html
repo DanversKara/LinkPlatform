@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Admin — Audit log — {{ cfg.site_name }}{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Audit log</h1><p class="sub">Administrative and security events.</p></div></div>
+
+<div class="tabs" role="tablist">
+  <a class="tab" href="/admin" role="tab" aria-selected="false">Overview</a>
+  <a class="tab" href="/admin/users" role="tab" aria-selected="false">Users</a>
+  <a class="tab" href="/admin/links" role="tab" aria-selected="false">Links</a>
+  <a class="tab" href="/admin/domains" role="tab" aria-selected="false">Domains</a>
+  <a class="tab" href="/admin/reports" role="tab" aria-selected="false">Reports</a>
+  <a class="tab" href="/admin/files" role="tab" aria-selected="false">Files</a>
+  <a class="tab active" href="/admin/audit" role="tab" aria-selected="true">Audit log</a>
+  <a class="tab" href="/admin/settings" role="tab" aria-selected="false">Settings</a>
+</div>
+
+<div class="card mb-4">
+  <input class="input" type="search" data-filter-table="#audit-table" placeholder="Filter rows…" aria-label="Filter audit log rows" style="max-width:360px">
+  <p class="hint hidden" data-filter-empty>No rows match the filter.</p>
+</div>
+
+{% if entries %}
+<div class="card card-flat" style="padding:0">
+  <div class="table-wrap" style="border:0">
+    <table class="table" id="audit-table">
+      <thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Detail</th><th>IP</th></tr></thead>
+      <tbody>
+        {% for a in entries %}
+        <tr>
+          <td class="muted small nowrap" style="white-space:nowrap">{{ a.ts }}</td>
+          <td class="small">{{ a.actor_email or 'system' }}</td>
+          <td><span class="badge badge-muted">{{ a.action }}</span></td>
+          <td class="small muted ellipsis" style="max-width:380px" title="{{ a.detail }}">{{ a.detail or '—' }}</td>
+          <td class="mono tiny muted">{{ a.ip or '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if page and pages and pages > 1 %}
+<nav class="pagination" aria-label="Pagination">
+  {% if page > 1 %}<a class="btn btn-ghost btn-sm" href="/admin/audit?page={{ page - 1 }}">Previous</a>{% endif %}
+  <span class="page-info">Page {{ page }} of {{ pages }}</span>
+  {% if page < pages %}<a class="btn btn-ghost btn-sm" href="/admin/audit?page={{ page + 1 }}">Next</a>{% endif %}
+</nav>
+{% endif %}
+{% else %}
+<div class="card"><div class="empty-state"><svg aria-hidden="true"><use href="#i-shield"/></svg><p>No audit entries yet.</p></div></div>
+{% endif %}
+{% endblock %}

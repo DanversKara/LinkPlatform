@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}{% if is_new %}New link{% else %}Edit link{% endif %} — {{ cfg.site_name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{% if is_new %}Create a new link{% else %}Edit link{% endif %}</h1>
+    {% if not is_new %}<p class="sub mono">/{{ link.code }}</p>{% endif %}
+  </div>
+  <a class="btn btn-ghost" href="/links">Back to links</a>
+</div>
+
+{% if errors.get('form') %}
+<div class="alert alert-error" role="alert"><svg aria-hidden="true"><use href="#i-alert"/></svg><span>{{ errors.get('form') }}</span></div>
+{% endif %}
+
+<div class="card container-narrow">
+  <form method="post" action="{% if is_new %}/links/new{% else %}/links/{{ link.id }}/edit{% endif %}" novalidate>
+    <input type="hidden" name="_csrf" value="{{ csrf }}">
+    <div class="form-grid">
+      <div class="field full">
+        <label class="label" for="original_url">Destination URL <span class="req" aria-hidden="true">*</span></label>
+        <input class="input {% if errors.get('original_url') %}error{% endif %}" type="url" id="original_url" name="original_url" required maxlength="2048" placeholder="https://example.com/very/long/path" value="{{ link.original_url if link else (prefill_url or '') }}">
+        {% if errors.get('original_url') %}<div class="field-error">{{ errors.get('original_url') }}</div>{% endif %}
+      </div>
+      <div class="field">
+        <label class="label" for="code">Custom slug</label>
+        <input class="input mono {% if errors.get('code') %}error{% endif %}" type="text" id="code" name="code" maxlength="64" pattern="[A-Za-z0-9_-]+" placeholder="Leave blank for random" value="{{ link.code if link and not is_new else '' }}">
+        {% if errors.get('code') %}<div class="field-error">{{ errors.get('code') }}</div>{% else %}<div class="hint">Letters, numbers, dashes, underscores. Blank = random slug.</div>{% endif %}
+      </div>
+      <div class="field">
+        <label class="label" for="title">Title</label>
+        <input class="input {% if errors.get('title') %}error{% endif %}" type="text" id="title" name="title" maxlength="160" placeholder="My awesome link" value="{{ link.title if link else '' }}">
+        {% if errors.get('title') %}<div class="field-error">{{ errors.get('title') }}</div>{% endif %}
+      </div>
+      <div class="field">
+        <label class="label" for="domain_id">Domain</label>
+        <select class="select" id="domain_id" name="domain_id">
+          <option value="">Default domain</option>
+          {% for d in user_domains %}
+          <option value="{{ d.id }}" {% if link and link.domain_id == d.id %}selected{% endif %}>{{ d.domain }}</option>
+          {% endfor %}
+        </select>
+        <div class="hint">Only verified domains appear here. <a href="/domains">Manage domains</a></div>
+      </div>
+      <div class="field">
+        <label class="label" for="expires_at">Expiry date</label>
+        <input class="input" type="datetime-local" id="expires_at" name="expires_at" value="{{ link.expires_at if link and link.expires_at else '' }}">
+        <div class="hint">Optional. The link stops working after this time.</div>
+      </div>
+      <div class="field full">
+        <div class="check-row">
+          <input class="checkbox" type="checkbox" id="is_active" name="is_active" value="1" {% if is_new or (link and link.is_active) %}checked{% endif %}>
+          <div><label class="label" for="is_active">Link is active</label><div class="hint">Disabled links show a “not found” page instead of redirecting.</div></div>
+        </div>
+        <div class="check-row">
+          <input class="checkbox" type="checkbox" id="landing_enabled" name="landing_enabled" value="1" {% if link and link.landing_enabled %}checked{% endif %}>
+          <div><label class="label" for="landing_enabled">Show interstitial landing page</label><div class="hint">Visitors see a branded preview card before continuing to the destination.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <h3 class="mb-3">Landing page content <span class="muted small">(used when interstitial is enabled)</span></h3>
+    <div class="form-grid">
+      <div class="field">
+        <label class="label" for="landing_title">Landing title</label>
+        <input class="input" type="text" id="landing_title" name="landing_title" maxlength="160" value="{{ link.landing_title if link and link.landing_title else '' }}">
+      </div>
+      <div class="field">
+        <label class="label" for="landing_image">Landing image URL</label>
+        <input class="input" type="url" id="landing_image" name="landing_image" maxlength="2048" placeholder="https://…" value="{{ link.landing_image if link and link.landing_image else '' }}">
+      </div>
+      <div class="field full">
+        <label class="label" for="landing_body">Landing text</label>
+        <textarea class="textarea" id="landing_body" name="landing_body" maxlength="2000" placeholder="A short message shown before the visitor continues…">{{ link.landing_body if link and link.landing_body else '' }}</textarea>
+      </div>
+    </div>
+
+    <div class="flex gap-2 mt-4">
+      <button class="btn btn-primary" type="submit">{% if is_new %}Create link{% else %}Save changes{% endif %}</button>
+      <a class="btn btn-ghost" href="/links">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Token created — {{ cfg.site_name }}{% endblock %}
+{% block content %}
+<div class="container-narrow" style="margin:0 auto">
+  <div class="card">
+    <h1 class="mb-2">Token created</h1>
+    <div class="alert alert-warning" role="alert">
+      <svg aria-hidden="true"><use href="#i-alert"/></svg>
+      <span>This secret is shown <strong>once</strong>. Copy it now — you will not be able to see it again.</span>
+    </div>
+    <div class="copy-row mb-4">
+      <div class="code-box" id="token-secret">{{ token_secret }}</div>
+      <button class="btn btn-primary" data-copy="{{ token_secret }}"><svg aria-hidden="true"><use href="#i-copy"/></svg>Copy</button>
+    </div>
+    <a class="btn btn-ghost" href="/settings/tokens">Back to API tokens</a>
+  </div>
+</div>
+{% endblock %}

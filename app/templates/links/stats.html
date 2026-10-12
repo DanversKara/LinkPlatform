@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Stats — {{ link.title or link.code }} — {{ cfg.site_name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ link.title or link.code }}</h1>
+    <p class="sub"><span class="mono">/{{ link.code }}</span> → <a href="{{ link.original_url }}" target="_blank" rel="noopener">{{ link.original_url }}</a></p>
+  </div>
+  <div class="flex gap-2">
+    <a class="btn btn-ghost" href="/links/{{ link.id }}/edit"><svg aria-hidden="true"><use href="#i-edit"/></svg>Edit</a>
+    <a class="btn btn-ghost" href="/links">Back</a>
+  </div>
+</div>
+
+<div class="stat-grid">
+  <div class="stat-card"><span class="num">{{ total }}</span><span class="lbl">Total clicks</span></div>
+  <div class="stat-card"><span class="num">{{ clicks_7d }}</span><span class="lbl">Last 7 days</span></div>
+  <div class="stat-card"><span class="num">{{ clicks_30d }}</span><span class="lbl">Last 30 days</span></div>
+  <div class="stat-card"><span class="num">{{ unique_ips }}</span><span class="lbl">Unique visitors</span></div>
+</div>
+
+<div class="card chart-card mb-5">
+  <div class="card-head"><h2>Clicks — last 30 days</h2></div>
+  {% if chart_svg_30d %}{{ chart_svg_30d|safe }}{% else %}<div class="empty-state"><svg aria-hidden="true"><use href="#i-chart"/></svg><p>No clicks in the last 30 days.</p></div>{% endif %}
+</div>
+
+<div class="grid grid-2 gap-4" style="align-items:start">
+  <div class="card">
+    <div class="card-head"><h3>Top referrers</h3></div>
+    {% if top_referers %}{% include "links/_top_table.html" with context %}{% else %}<p class="muted">No referrer data yet.</p>{% endif %}
+  </div>
+  <div class="card">
+    <div class="card-head"><h3>Top countries</h3></div>
+    {% if top_countries %}
+    <div class="table-wrap" style="border:0"><table class="table"><tbody>
+      {% for r in top_countries %}<tr><td>{{ r.label or 'Unknown' }}</td><td class="num text-right strong">{{ r.count }}</td></tr>{% endfor %}
+    </tbody></table></div>
+    {% else %}<p class="muted">No country data yet.</p>{% endif %}
+  </div>
+  <div class="card">
+    <div class="card-head"><h3>Devices</h3></div>
+    {% if top_devices %}
+    <div class="table-wrap" style="border:0"><table class="table"><tbody>
+      {% for r in top_devices %}<tr><td>{{ r.label or 'Unknown' }}</td><td class="num text-right strong">{{ r.count }}</td></tr>{% endfor %}
+    </tbody></table></div>
+    {% else %}<p class="muted">No device data yet.</p>{% endif %}
+  </div>
+  <div class="card">
+    <div class="card-head"><h3>Browsers</h3></div>
+    {% if top_browsers %}
+    <div class="table-wrap" style="border:0"><table class="table"><tbody>
+      {% for r in top_browsers %}<tr><td>{{ r.label or 'Unknown' }}</td><td class="num text-right strong">{{ r.count }}</td></tr>{% endfor %}
+    </tbody></table></div>
+    {% else %}<p class="muted">No browser data yet.</p>{% endif %}
+  </div>
+</div>
+
+<div class="card mt-5">
+  <div class="card-head"><h3>Recent clicks</h3></div>
+  {% if recent %}
+  <div class="table-wrap" style="border:0">
+    <table class="table">
+      <thead><tr><th>When</th><th>Referrer</th><th>Device</th><th>Browser</th><th>Country</th></tr></thead>
+      <tbody>
+        {% for c in recent %}
+        <tr><td class="muted small">{{ c.ts }}</td><td class="ellipsis small" title="{{ c.referer }}">{{ c.referer or 'Direct' }}</td><td>{{ c.device or '—' }}</td><td>{{ c.browser or '—' }}</td><td>{{ c.country or '—' }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}<p class="muted">No clicks recorded yet.</p>{% endif %}
+</div>
+{% endblock %}

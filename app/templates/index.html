@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}{{ cfg.site_name }} — {{ cfg.site_tagline }}{% endblock %}
+{% block content %}
+<div class="landing-hero">
+  <h1>Short links, <span class="grad">beautiful profiles.</span></h1>
+  <p class="lead">{{ cfg.site_tagline.rstrip(".!") }}. Create branded short links, track every click in real time, and publish a polished bio page — all in one fast, private platform.</p>
+  <div class="hero-ctas">
+    {% if user %}
+    <a class="btn btn-primary btn-lg" href="/links/new"><svg aria-hidden="true"><use href="#i-plus"/></svg>Shorten a link</a>
+    <a class="btn btn-ghost btn-lg" href="/dashboard">Go to dashboard</a>
+    {% else %}
+    {% if cfg.registration_open %}<a class="btn btn-primary btn-lg" href="/register">Get started free</a>{% endif %}
+    <a class="btn btn-ghost btn-lg" href="/login">Log in</a>
+    {% endif %}
+  </div>
+  <div class="hero-demo">
+    <form class="demo-bar" method="get" action="/links/new" role="search" aria-label="Shorten a link">
+      <input class="demo-input" type="url" name="url" required maxlength="2048" placeholder="Paste a long URL to shorten it…" aria-label="Long URL" autocomplete="off">
+      <button class="btn btn-primary btn-sm" type="submit">Shorten</button>
+    </form>
+  </div>
+</div>
+
+<div class="container">
+  <h2 class="section-title">Everything you need to share</h2>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <span class="feature-icon"><svg aria-hidden="true"><use href="#i-link"/></svg></span>
+      <h3>Smart short links</h3>
+      <p>Custom slugs, custom domains, QR codes, expiry dates, and optional interstitial landing pages — links that work exactly how you want.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon"><svg aria-hidden="true"><use href="#i-chart"/></svg></span>
+      <h3>Real-time analytics</h3>
+      <p>Click-through charts, top referrers, devices, browsers, and countries. Know exactly who clicks, from where, and on what.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon"><svg aria-hidden="true"><use href="#i-user"/></svg></span>
+      <h3>Bio pages</h3>
+      <p>One link in your bio that holds everything. Six hand-crafted themes, custom accent colors, avatars, and drag-free reordering.</p>
+    </div>
+  </div>
+
+  <h2 class="section-title">How it works</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <h3>Create an account</h3>
+      <p>Sign up in seconds{% if not cfg.registration_open %} (when registration is open){% endif %}, pick your username, and you are ready.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <h3>Shorten &amp; style</h3>
+      <p>Paste any URL, choose a slug or domain, add a QR code, or build your bio page with your own theme.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <h3>Share &amp; measure</h3>
+      <p>Share your links anywhere and watch clicks roll in on your dashboard with live analytics.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

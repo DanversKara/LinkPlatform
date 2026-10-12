@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}API tokens — {{ cfg.site_name }}{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Settings</h1><p class="sub">Manage API access tokens.</p></div></div>
+
+<div class="tabs" role="tablist">
+  <a class="tab" href="/settings/profile" role="tab" aria-selected="false">Profile</a>
+  <a class="tab" href="/bio/edit" role="tab" aria-selected="false">Bio page</a>
+  <a class="tab active" href="/settings/tokens" role="tab" aria-selected="true">API tokens</a>
+</div>
+
+<div class="card mb-5">
+  <div class="card-head"><h2>Create a token</h2></div>
+  {% if error %}
+  <div class="alert alert-error" role="alert"><svg aria-hidden="true"><use href="#i-alert"/></svg><span>{{ error }}</span></div>
+  {% endif %}
+  <form method="post" action="/settings/tokens" novalidate>
+    <input type="hidden" name="_csrf" value="{{ csrf }}">
+    <div class="field">
+      <label class="label" for="token_name">Token name <span class="req" aria-hidden="true">*</span></label>
+      <input class="input" type="text" id="token_name" name="name" maxlength="80" required placeholder="e.g. My automation script">
+    </div>
+    <fieldset class="field" style="border:0;padding:0">
+      <legend class="label">Scopes</legend>
+      {% for s in scopes %}
+      <div class="check-row"><input class="checkbox" type="checkbox" id="scope_{{ loop.index }}" name="scope_{{ s }}" value="1" {% if 'write' not in s %}checked{% endif %}><div><label class="label" for="scope_{{ loop.index }}">{{ s }}</label><div class="hint">{% if s == 'links:read' %}Read links and bio data via the API.{% elif s == 'links:write' %}Create, update and delete links via the API.{% elif s == 'bio:read' %}Read bio profile data via the API.{% elif s == 'bio:write' %}Update bio profile via the API.{% endif %}</div></div></div>
+      {% endfor %}
+    </fieldset>
+    <button class="btn btn-primary" type="submit"><svg aria-hidden="true"><use href="#i-key"/></svg>Create token</button>
+  </form>
+</div>
+
+<div class="card card-flat" style="padding:0">
+  <div class="card-head" style="padding:20px 24px 0"><h2>Your tokens</h2></div>
+  {% if tokens %}
+  <div class="table-wrap" style="border:0">
+    <table class="table">
+      <thead><tr><th>Name</th><th>Prefix</th><th>Scopes</th><th>Last used</th><th>Created</th><th class="text-right">Actions</th></tr></thead>
+      <tbody>
+        {% for t in tokens %}
+        <tr>
+          <td class="strong">{{ t.name }}</td>
+          <td class="mono muted">{{ t.prefix }}…</td>
+          <td><div class="scope-list">{% for s in t.scopes.split() %}<span class="badge badge-info">{{ s }}</span>{% endfor %}</div></td>
+          <td class="muted small">{{ t.last_used_at or 'Never' }}</td>
+          <td class="muted small">{{ t.created_at }}</td>
+          <td>
+            <div class="table-actions">
+              <form method="post" action="/settings/tokens/{{ t.id }}/revoke" data-confirm="Revoke token “{{ t.name }}”? Anything using it will stop working." style="margin:0"><input type="hidden" name="_csrf" value="{{ csrf }}"><button class="btn btn-danger btn-sm" type="submit">Revoke</button></form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><svg aria-hidden="true"><use href="#i-key"/></svg><p>No API tokens yet. Create one above.</p></div>
+  {% endif %}
+</div>
+
+<div class="card mt-5">
+  <div class="card-head"><h2>Using the API</h2></div>
+  <p class="small muted mb-3">Send your token as a <span class="kbd">Bearer</span> token in the <span class="kbd">Authorization</span> header:</p>
+  <div class="code-box">curl -H "Authorization: Bearer YOUR_TOKEN" {{ cfg.base_url }}/api/v1/links</div>
+</div>
+{% endblock %}

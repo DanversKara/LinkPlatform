@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Files — {{ cfg.site_name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Files</h1><p class="sub">Upload files and share them with short links.</p></div>
+</div>
+
+<div class="card mb-5">
+  <div class="card-head"><h2>Upload a file</h2></div>
+  {% if error %}
+  <div class="alert alert-error" role="alert"><svg aria-hidden="true"><use href="#i-alert"/></svg><span>{{ error }}</span></div>
+  {% endif %}
+  <form method="post" action="/files" enctype="multipart/form-data">
+    <input type="hidden" name="_csrf" value="{{ csrf }}">
+    <div class="input-group">
+      <input class="input" type="file" name="file" required aria-label="Choose a file to upload">
+      <button class="btn btn-primary" type="submit"><svg aria-hidden="true"><use href="#i-plus"/></svg>Upload</button>
+    </div>
+    <div class="hint">Max 25 MB per file.</div>
+  </form>
+</div>
+
+{% if files %}
+<div class="card card-flat" style="padding:0">
+  <div class="table-wrap" style="border:0">
+    <table class="table">
+      <thead><tr><th>File</th><th>Size</th><th>Type</th><th>Uploaded</th><th class="text-right">Actions</th></tr></thead>
+      <tbody>
+        {% for f in files %}
+        <tr>
+          <td><strong>{{ f.original_name }}</strong><br><span class="tiny muted mono">{{ f.url }}</span></td>
+          <td class="num muted">{{ f.size }}</td>
+          <td class="muted small">{{ f.mime }}</td>
+          <td class="muted small">{{ f.created_at }}</td>
+          <td>
+            <div class="table-actions">
+              <button class="icon-btn" data-copy="{{ f.url }}" title="Copy URL" aria-label="Copy URL for {{ f.original_name }}"><svg aria-hidden="true"><use href="#i-copy"/></svg></button>
+              <a class="icon-btn" href="{{ f.url }}" target="_blank" rel="noopener" title="Open" aria-label="Open {{ f.original_name }}"><svg aria-hidden="true"><use href="#i-external"/></svg></a>
+              <form method="post" action="/files/{{ f.id }}/delete" data-confirm="Delete “{{ f.original_name }}”? Any links to it will break." style="margin:0"><input type="hidden" name="_csrf" value="{{ csrf }}"><button class="icon-btn danger" title="Delete" aria-label="Delete {{ f.original_name }}"><svg aria-hidden="true"><use href="#i-trash"/></svg></button></form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card"><div class="empty-state">
+  <svg aria-hidden="true"><use href="#i-file"/></svg>
+  <h3>No files yet</h3>
+  <p>Upload a file above to get a shareable short link.</p>
+</div></div>
+{% endif %}
+{% endblock %}

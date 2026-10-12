@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Admin — Users — {{ cfg.site_name }}{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Users</h1><p class="sub">{{ total }} user{{ 's' if total != 1 }}</p></div></div>
+
+<div class="tabs" role="tablist">
+  <a class="tab" href="/admin" role="tab" aria-selected="false">Overview</a>
+  <a class="tab active" href="/admin/users" role="tab" aria-selected="true">Users</a>
+  <a class="tab" href="/admin/links" role="tab" aria-selected="false">Links</a>
+  <a class="tab" href="/admin/domains" role="tab" aria-selected="false">Domains</a>
+  <a class="tab" href="/admin/reports" role="tab" aria-selected="false">Reports</a>
+  <a class="tab" href="/admin/files" role="tab" aria-selected="false">Files</a>
+  <a class="tab" href="/admin/audit" role="tab" aria-selected="false">Audit log</a>
+  <a class="tab" href="/admin/settings" role="tab" aria-selected="false">Settings</a>
+</div>
+
+<form class="search-bar" method="get" action="/admin/users" role="search">
+  <input class="input" type="search" name="q" placeholder="Search email or name…" value="{{ q or '' }}" aria-label="Search users">
+  <button class="btn btn-ghost" type="submit"><svg aria-hidden="true"><use href="#i-search"/></svg>Search</button>
+</form>
+
+{% if users %}
+<div class="card card-flat" style="padding:0">
+  <div class="table-wrap" style="border:0">
+    <table class="table">
+      <thead><tr><th>User</th><th>Role</th><th>Bio page</th><th>Status</th><th>Verified</th><th>Created</th><th class="text-right">Actions</th></tr></thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td><strong>{{ u.display_name }}</strong><br><span class="tiny muted">{{ u.email }}</span></td>
+          <td>
+            <form method="post" action="/admin/users/{{ u.id }}/role" style="margin:0">
+              <input type="hidden" name="_csrf" value="{{ csrf }}">
+              <select class="select btn-sm" style="width:auto;padding:4px 28px 4px 10px;font-size:0.85rem" name="role" aria-label="Role for {{ u.email }}" data-autosubmit {% if u.email == user.email %}disabled{% endif %}>
+                <option value="user" {% if u.role == 'user' %}selected{% endif %}>user</option>
+                <option value="admin" {% if u.role == 'admin' %}selected{% endif %}>admin</option>
+              </select>
+            </form>
+          </td>
+          <td><a class="mono small" href="/@{{ u.slug }}" target="_blank" rel="noopener">/@{{ u.slug }}</a></td>
+          <td>{% if u.is_active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-danger">Disabled</span>{% endif %}</td>
+          <td>
+            <form method="post" action="/admin/users/{{ u.id }}/verify" style="margin:0">
+              <input type="hidden" name="_csrf" value="{{ csrf }}">
+              {% if u.is_verified %}
+              <button class="btn btn-sm verify-btn is-on" type="submit" title="Remove the Verified badge from /@{{ u.slug }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 1.5l2.4 1.8 3-.2.9 2.9 2.5 1.7-.9 2.9.9 2.9-2.5 1.7-.9 2.9-3-.2L12 22.5l-2.4-1.8-3 .2-.9-2.9-2.5-1.7.9-2.9-.9-2.9 2.5-1.7.9-2.9 3 .2z"/><path d="M7.8 12.3l2.8 2.8 5.6-5.8" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Verified</button>
+              {% else %}
+              <button class="btn btn-ghost btn-sm verify-btn" type="submit" title="Show a Verified badge on /@{{ u.slug }}">Verify</button>
+              {% endif %}
+            </form>
+          </td>
+          <td class="muted small">{{ u.created_at }}</td>
+          <td>
+            <div class="table-actions">
+              {% if u.email != user.email %}
+              <form method="post" action="/admin/users/{{ u.id }}/toggle" style="margin:0"><input type="hidden" name="_csrf" value="{{ csrf }}"><button class="btn btn-ghost btn-sm" type="submit">{% if u.is_active %}Disable{% else %}Enable{% endif %}</button></form>
+              <form method="post" action="/admin/users/{{ u.id }}/delete" data-confirm="Delete user {{ u.email }} and ALL of their links, files, and data? This cannot be undone." style="margin:0"><input type="hidden" name="_csrf" value="{{ csrf }}"><button class="icon-btn danger" title="Delete user" aria-label="Delete user {{ u.email }}"><svg aria-hidden="true"><use href="#i-trash"/></svg></button></form>
+              {% else %}
+              <span class="tiny muted">You</span>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card"><div class="empty-state"><svg aria-hidden="true"><use href="#i-users"/></svg><p>No users found.</p></div></div>
+{% endif %}
+{% endblock %}

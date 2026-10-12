@@ -1,0 +1,9 @@
+<div class="table-wrap" style="border:0">
+  <table class="table">
+    <tbody>
+      {% for r in top_referers %}
+      <tr><td class="ellipsis small" title="{{ r.label }}">{{ r.label or 'Direct' }}</td><td class="num text-right strong">{{ r.count }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Create account — {{ cfg.site_name }}{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="card auth-card">
+    <a class="brand" href="/"><span class="brand-mark"><svg aria-hidden="true"><use href="#i-link"/></svg></span><span>{{ cfg.site_name }}</span></a>
+    <h1 class="auth-title">Create your account</h1>
+    <p class="auth-sub">Short links, analytics, and your own bio page.</p>
+    {% if error %}
+    <div class="alert alert-error" role="alert"><svg aria-hidden="true"><use href="#i-alert"/></svg><span>{{ error }}</span></div>
+    {% endif %}
+    <form method="post" action="/register" novalidate>
+      <input type="hidden" name="_csrf" value="{{ csrf }}">
+      <div class="field">
+        <label class="label" for="display_name">Display name <span class="req" aria-hidden="true">*</span></label>
+        <input class="input" type="text" id="display_name" name="display_name" autocomplete="name" required maxlength="80" value="{{ display_name|default('', true) }}">
+      </div>
+      <div class="field">
+        <label class="label" for="email">Email <span class="req" aria-hidden="true">*</span></label>
+        <input class="input" type="email" id="email" name="email" autocomplete="email" required maxlength="255" value="{{ email|default('', true) }}">
+      </div>
+      <div class="field">
+        <label class="label" for="password">Password <span class="req" aria-hidden="true">*</span></label>
+        <input class="input" type="password" id="password" name="password" data-pw-strength autocomplete="new-password" required minlength="8" maxlength="128">
+        <div class="hint">At least 8 characters. Longer is stronger.</div>
+      </div>
+      <button class="btn btn-primary btn-block" type="submit">Create account</button>
+    </form>
+    <p class="auth-foot">Already have an account? <a href="/login">Log in</a></p>
+  </div>
+</div>
+{% endblock %}

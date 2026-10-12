@@ -1,0 +1,297 @@
+{# Animated landscape background, ported from karas.page. All colours are
+   derived from the palette CSS variables, so it re-tints with the theme. #}
+<div class="scene" aria-hidden="true">
+
+  <!-- Sky -->
+  <div class="sky"></div>
+
+  <!-- Sun -->
+  <div class="sun-rays"></div>
+  <div class="sun-halo"></div>
+  <div class="sun"></div>
+
+  <!-- Clouds -->
+  <div class="cloud-layer">
+    <svg class="cloud cloud-sun" viewBox="0 0 260 110">
+      <ellipse class="puff-back" cx="60"  cy="72" rx="46" ry="28"/>
+      <ellipse class="puff-back" cx="200" cy="76" rx="40" ry="24"/>
+      <ellipse cx="80"  cy="66" rx="50" ry="32"/>
+      <ellipse cx="130" cy="52" rx="58" ry="38"/>
+      <ellipse cx="186" cy="68" rx="46" ry="30"/>
+      <ellipse cx="130" cy="80" rx="86" ry="24"/>
+    </svg>
+
+    <svg class="cloud cloud-a" viewBox="0 0 220 90">
+      <ellipse class="puff-back" cx="52" cy="58" rx="38" ry="22"/>
+      <ellipse cx="72"  cy="52" rx="42" ry="27"/>
+      <ellipse cx="118" cy="42" rx="48" ry="32"/>
+      <ellipse cx="164" cy="56" rx="38" ry="24"/>
+      <ellipse cx="112" cy="66" rx="72" ry="19"/>
+    </svg>
+
+    <svg class="cloud cloud-b" viewBox="0 0 220 90">
+      <ellipse class="puff-back" cx="48" cy="60" rx="36" ry="20"/>
+      <ellipse cx="76"  cy="50" rx="46" ry="29"/>
+      <ellipse cx="128" cy="44" rx="50" ry="33"/>
+      <ellipse cx="170" cy="60" rx="34" ry="21"/>
+      <ellipse cx="110" cy="68" rx="70" ry="18"/>
+    </svg>
+
+    <svg class="cloud cloud-c" viewBox="0 0 220 90">
+      <ellipse cx="66"  cy="54" rx="44" ry="26"/>
+      <ellipse cx="120" cy="46" rx="50" ry="30"/>
+      <ellipse cx="164" cy="58" rx="36" ry="22"/>
+      <ellipse cx="112" cy="66" rx="66" ry="17"/>
+    </svg>
+
+    <svg class="cloud cloud-d" viewBox="0 0 220 90">
+      <ellipse cx="70"  cy="56" rx="40" ry="23"/>
+      <ellipse cx="124" cy="48" rx="46" ry="28"/>
+      <ellipse cx="164" cy="58" rx="32" ry="19"/>
+    </svg>
+  </div>
+
+  <!-- Distant hills -->
+  <svg class="hills" viewBox="0 0 1600 300" preserveAspectRatio="none">
+    <path class="h-back" d="M0,300 L0,190 C120,140 220,175 320,150 C430,122 520,168 640,142
+                            C760,116 850,160 970,134 C1090,108 1180,152 1300,128
+                            C1400,108 1500,150 1600,132 L1600,300 Z"/>
+    <path class="h-front" d="M0,300 L0,232 C140,196 260,224 380,204 C520,180 620,216 760,196
+                             C900,176 1000,212 1140,192 C1280,172 1400,206 1600,186 L1600,300 Z"/>
+  </svg>
+
+  <!-- Distant city skyline -->
+  <svg class="city" viewBox="0 0 1600 400" preserveAspectRatio="none">
+    <defs>
+      <g id="buildings">
+        <rect x="40"   y="250" width="50" height="150"/>
+        <rect x="100"  y="200" width="60" height="200"/>
+        <rect x="170"  y="165" width="55" height="235"/>
+        <rect x="235"  y="235" width="45" height="165"/>
+        <rect x="290"  y="185" width="62" height="215"/>
+        <rect x="362"  y="140" width="70" height="260"/>
+        <rect x="442"  y="215" width="48" height="185"/>
+        <rect x="500"  y="175" width="58" height="225"/>
+        <rect x="568"  y="245" width="45" height="155"/>
+        <rect x="623"  y="195" width="65" height="205"/>
+        <rect x="698"  y="155" width="55" height="245"/>
+        <rect x="763"  y="220" width="50" height="180"/>
+        <rect x="823"  y="170" width="62" height="230"/>
+        <rect x="895"  y="130" width="72" height="270"/>
+        <rect x="977"  y="205" width="52" height="195"/>
+        <rect x="1039" y="165" width="60" height="235"/>
+        <rect x="1109" y="230" width="48" height="170"/>
+        <rect x="1167" y="185" width="62" height="215"/>
+        <rect x="1239" y="148" width="68" height="252"/>
+        <rect x="1317" y="212" width="52" height="188"/>
+        <rect x="1379" y="172" width="58" height="228"/>
+        <rect x="1447" y="235" width="46" height="165"/>
+        <rect x="1503" y="190" width="62" height="210"/>
+        <!-- antennae / spires -->
+        <rect x="392"  y="112" width="6"  height="30"/>
+        <rect x="924"  y="100" width="6"  height="32"/>
+        <rect x="1268" y="120" width="5"  height="30"/>
+        <rect x="726"  y="128" width="5"  height="28"/>
+      </g>
+      <clipPath id="cityClip"><use href="#buildings"/></clipPath>
+      <pattern id="winPat" width="15" height="21" patternUnits="userSpaceOnUse">
+        <rect x="3.5" y="5" width="5" height="7" fill="var(--window-fill)" opacity="0.55"/>
+      </pattern>
+      <pattern id="winPat2" width="15" height="21" patternUnits="userSpaceOnUse">
+        <rect x="3.5" y="5" width="5" height="7" fill="var(--window-fill)" opacity="0.28"/>
+      </pattern>
+    </defs>
+
+    <use href="#buildings" fill="var(--city-fill)"/>
+    <g clip-path="url(#cityClip)">
+      <rect width="1600" height="400" fill="url(#winPat2)"/>
+      <rect width="1600" height="400" fill="url(#winPat)" opacity="0.7"/>
+    </g>
+  </svg>
+
+  <!-- Ground -->
+  <div class="ground"></div>
+
+  <!-- Road into the city -->
+  <svg class="road" viewBox="0 0 1600 500" preserveAspectRatio="none">
+    <defs>
+      <linearGradient id="roadGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"   stop-color="#4a4a55" stop-opacity="0.42"/>
+        <stop offset="45%"  stop-color="#3a3a44" stop-opacity="0.78"/>
+        <stop offset="100%" stop-color="#2c2c34" stop-opacity="0.96"/>
+      </linearGradient>
+      <linearGradient id="shoulderGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"   stop-color="#7a7a68" stop-opacity="0.30"/>
+        <stop offset="100%" stop-color="#8a8a72" stop-opacity="0.60"/>
+      </linearGradient>
+    </defs>
+
+    <!-- Gravel shoulders -->
+    <path d="M 480 500 L 620 500 L 792 0 L 786 0 Z" fill="url(#shoulderGrad)"/>
+    <path d="M 980 500 L 1120 500 L 814 0 L 808 0 Z" fill="url(#shoulderGrad)"/>
+
+    <!-- Road surface -->
+    <path d="M 600 500 L 1000 500 L 812 0 L 788 0 Z" fill="url(#roadGrad)"/>
+
+    <!-- Road edges -->
+    <path d="M 600 500 L 788 0" stroke="#d8d8d0" stroke-width="3.5" stroke-opacity="0.42" fill="none"/>
+    <path d="M 1000 500 L 812 0" stroke="#d8d8d0" stroke-width="3.5" stroke-opacity="0.42" fill="none"/>
+
+    <!-- Perspective centre dashes (shrinking with distance) -->
+    <rect x="793.5" y="450" width="13"  height="42" rx="4"   fill="#f3d774" opacity="0.85"/>
+    <rect x="795.5" y="386" width="10"  height="32" rx="3.5" fill="#f3d774" opacity="0.82"/>
+    <rect x="796.8" y="338" width="7.5" height="24" rx="3"   fill="#f3d774" opacity="0.78"/>
+    <rect x="797.8" y="300" width="5.6" height="17" rx="2.4" fill="#f3d774" opacity="0.72"/>
+    <rect x="798.6" y="270" width="4.2" height="13" rx="2"   fill="#f3d774" opacity="0.66"/>
+    <rect x="799.1" y="245" width="3.1" height="9"  rx="1.5" fill="#f3d774" opacity="0.58"/>
+    <rect x="799.4" y="225" width="2.4" height="7"  rx="1.2" fill="#f3d774" opacity="0.50"/>
+    <rect x="799.6" y="209" width="1.8" height="5"  rx="0.9" fill="#f3d774" opacity="0.42"/>
+    <rect x="799.8" y="196" width="1.3" height="4"  rx="0.6" fill="#f3d774" opacity="0.34"/>
+    <rect x="799.9" y="186" width="1"   height="3"  rx="0.5" fill="#f3d774" opacity="0.26"/>
+  </svg>
+
+  <!-- Trees along the horizon -->
+  <svg class="tree-row" viewBox="0 0 1600 300" preserveAspectRatio="none">
+    <g fill="var(--tree-dark)">
+      <!-- pines -->
+      <g transform="translate(70,90) scale(0.85)">
+        <rect x="-4" y="72" width="8" height="26" fill="var(--trunk)"/>
+        <path d="M0 0 L-26 42 L-10 42 L-34 78 L34 78 L10 42 L26 42 Z"/>
+      </g>
+      <g transform="translate(150,110) scale(0.7)">
+        <rect x="-4" y="72" width="8" height="26" fill="var(--trunk)"/>
+        <path d="M0 0 L-26 42 L-10 42 L-34 78 L34 78 L10 42 L26 42 Z"/>
+      </g>
+      <g transform="translate(300,95) scale(0.8)">
+        <rect x="-4" y="72" width="8" height="26" fill="var(--trunk)"/>
+        <path d="M0 0 L-26 42 L-10 42 L-34 78 L34 78 L10 42 L26 42 Z"/>
+      </g>
+      <g transform="translate(1080,100) scale(0.78)">
+        <rect x="-4" y="72" width="8" height="26" fill="var(--trunk)"/>
+        <path d="M0 0 L-26 42 L-10 42 L-34 78 L34 78 L10 42 L26 42 Z"/>
+      </g>
+      <g transform="translate(1230,112) scale(0.66)">
+        <rect x="-4" y="72" width="8" height="26" fill="var(--trunk)"/>
+        <path d="M0 0 L-26 42 L-10 42 L-34 78 L34 78 L10 42 L26 42 Z"/>
+      </g>
+      <g transform="translate(1420,96) scale(0.82)">
+        <rect x="-4" y="72" width="8" height="26" fill="var(--trunk)"/>
+        <path d="M0 0 L-26 42 L-10 42 L-34 78 L34 78 L10 42 L26 42 Z"/>
+      </g>
+      <g transform="translate(1560,108) scale(0.72)">
+        <rect x="-4" y="72" width="8" height="26" fill="var(--trunk)"/>
+        <path d="M0 0 L-26 42 L-10 42 L-34 78 L34 78 L10 42 L26 42 Z"/>
+      </g>
+    </g>
+  </svg>
+
+  <!-- Foreground: big trees, rocks, grass -->
+  <svg class="foreground" viewBox="0 0 1600 620" preserveAspectRatio="xMidYMax slice">
+
+    <!-- ── Big tree, left ── -->
+    <g transform="translate(70,120)">
+      <rect x="-14" y="250" width="28" height="250" rx="6" fill="var(--trunk)"/>
+      <path d="M0 250 L-40 200 M0 300 L42 240 M0 370 L-38 320"
+            stroke="var(--trunk)" stroke-width="12" fill="none" stroke-linecap="round"/>
+      <ellipse cx="0"   cy="180" rx="130" ry="110" fill="var(--tree-dark)"/>
+      <ellipse cx="-60" cy="230" rx="90"  ry="72"  fill="var(--tree-dark)"/>
+      <ellipse cx="62"  cy="222" rx="96"  ry="78"  fill="var(--tree-dark)"/>
+      <ellipse cx="-18" cy="140" rx="86"  ry="68"  fill="var(--tree-light)" opacity="0.55"/>
+      <ellipse cx="48"  cy="176" rx="72"  ry="58"  fill="var(--tree-light)" opacity="0.40"/>
+    </g>
+
+    <!-- ── Big tree, right ── -->
+    <g transform="translate(1540,90)">
+      <rect x="-16" y="280" width="32" height="280" rx="7" fill="var(--trunk)"/>
+      <path d="M0 290 L-46 232 M0 344 L48 284 M0 420 L-42 366"
+            stroke="var(--trunk)" stroke-width="14" fill="none" stroke-linecap="round"/>
+      <ellipse cx="0"   cy="196" rx="150" ry="126" fill="var(--tree-dark)"/>
+      <ellipse cx="-70" cy="256" rx="104" ry="82"  fill="var(--tree-dark)"/>
+      <ellipse cx="72"  cy="248" rx="110" ry="88"  fill="var(--tree-dark)"/>
+      <ellipse cx="-22" cy="148" rx="98"  ry="76"  fill="var(--tree-light)" opacity="0.55"/>
+      <ellipse cx="56"  cy="192" rx="80"  ry="64"  fill="var(--tree-light)" opacity="0.38"/>
+    </g>
+
+    <!-- ── Mid pine cluster, left ── -->
+    <g transform="translate(215,330) scale(1.25)" fill="var(--tree-dark)">
+      <rect x="-4" y="70" width="8" height="30" fill="var(--trunk)"/>
+      <path d="M0 0 L-28 44 L-11 44 L-36 82 L36 82 L11 44 L28 44 Z"/>
+    </g>
+    <g transform="translate(268,352) scale(1.0)" fill="var(--tree-dark)">
+      <rect x="-4" y="70" width="8" height="30" fill="var(--trunk)"/>
+      <path d="M0 0 L-28 44 L-11 44 L-36 82 L36 82 L11 44 L28 44 Z"/>
+    </g>
+
+    <!-- ── Mid pine cluster, right ── -->
+    <g transform="translate(1372,336) scale(1.2)" fill="var(--tree-dark)">
+      <rect x="-4" y="70" width="8" height="30" fill="var(--trunk)"/>
+      <path d="M0 0 L-28 44 L-11 44 L-36 82 L36 82 L11 44 L28 44 Z"/>
+    </g>
+    <g transform="translate(1428,358) scale(0.95)" fill="var(--tree-dark)">
+      <rect x="-4" y="70" width="8" height="30" fill="var(--trunk)"/>
+      <path d="M0 0 L-28 44 L-11 44 L-36 82 L36 82 L11 44 L28 44 Z"/>
+    </g>
+
+    <!-- ── Rocks, left of road ── -->
+    <g fill="var(--tree-dark)" opacity="0.9">
+      <path d="M430 610 L455 560 L500 548 L540 566 L560 610 Z"/>
+      <path d="M556 610 L574 578 L606 570 L628 590 L636 610 Z" opacity="0.75"/>
+    </g>
+    <!-- ── Rocks, right of road ── -->
+    <g fill="var(--tree-dark)" opacity="0.9">
+      <path d="M1042 610 L1062 566 L1104 552 L1144 572 L1162 610 Z"/>
+      <path d="M1166 610 L1182 582 L1210 574 L1230 592 L1238 610 Z" opacity="0.75"/>
+    </g>
+
+    <!-- ── Grass tufts along the bottom ── -->
+    <g stroke="var(--tree-light)" stroke-width="2.6" fill="none" stroke-linecap="round" opacity="0.85">
+      <path d="M180 620 Q176 596 168 586 M180 620 Q182 594 186 582 M180 620 Q188 600 198 592"/>
+      <path d="M340 620 Q336 598 328 588 M340 620 Q342 596 346 584 M340 620 Q348 602 358 594"/>
+      <path d="M700 620 Q696 598 688 588 M700 620 Q702 596 706 584 M700 620 Q708 602 718 594"/>
+      <path d="M900 620 Q896 598 888 588 M900 620 Q902 596 906 584 M900 620 Q908 602 918 594"/>
+      <path d="M1250 620 Q1246 596 1238 586 M1250 620 Q1252 594 1256 582 M1250 620 Q1258 600 1268 592"/>
+      <path d="M1470 620 Q1466 598 1458 588 M1470 620 Q1472 596 1476 584 M1470 620 Q1478 602 1488 594"/>
+    </g>
+
+    <!-- ── Small critters ── -->
+    <!-- Rabbit -->
+    <g transform="translate(820,596) scale(0.9)" fill="var(--tree-dark)">
+      <ellipse cx="0" cy="10" rx="13" ry="10"/>
+      <circle cx="12" cy="2" r="7"/>
+      <ellipse cx="9"  cy="-7" rx="3" ry="9" transform="rotate(-14 9 -7)"/>
+      <ellipse cx="15" cy="-7" rx="3" ry="9" transform="rotate(10 15 -7)"/>
+      <circle cx="15" cy="1" r="1.6" fill="var(--window-fill)" opacity="0.85"/>
+    </g>
+    <!-- Deer silhouette (distant, on the grass) -->
+    <g transform="translate(1240,520) scale(0.55)" fill="var(--tree-dark)" opacity="0.9">
+      <ellipse cx="0" cy="0" rx="30" ry="17"/>
+      <path d="M-22 10 L-24 44 M-6 12 L-8 46 M14 10 L16 46 M26 6 L30 42"
+            stroke="var(--tree-dark)" stroke-width="6" stroke-linecap="round"/>
+      <path d="M26 -6 Q40 -16 44 -34" stroke="var(--tree-dark)" stroke-width="8" fill="none" stroke-linecap="round"/>
+      <circle cx="46" cy="-38" r="9"/>
+      <path d="M40 -46 Q36 -60 30 -66 M44 -47 Q44 -62 42 -70"
+            stroke="var(--tree-dark)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+      <path d="M-28 -8 Q-40 -18 -42 -26" stroke="var(--tree-dark)" stroke-width="5" fill="none" stroke-linecap="round"/>
+    </g>
+  </svg>
+
+  <!-- Birds -->
+  <div class="bird" style="top: 20%; width: 22px; height: 11px; animation-duration: 42s; animation-delay: -6s;">
+    <svg viewBox="0 0 24 12"><path class="wing" d="M0 8 Q6 1 12 8 Q18 1 24 8" stroke="currentColor" stroke-width="1.9" fill="none" stroke-linecap="round"/></svg>
+  </div>
+  <div class="bird" style="top: 24%; width: 18px; height: 9px; animation-duration: 52s; animation-delay: -22s;">
+    <svg viewBox="0 0 24 12"><path class="wing" d="M0 8 Q6 1 12 8 Q18 1 24 8" stroke="currentColor" stroke-width="1.9" fill="none" stroke-linecap="round"/></svg>
+  </div>
+  <div class="bird" style="top: 17%; width: 26px; height: 13px; animation-duration: 60s; animation-delay: -40s;">
+    <svg viewBox="0 0 24 12"><path class="wing" d="M0 8 Q6 1 12 8 Q18 1 24 8" stroke="currentColor" stroke-width="1.9" fill="none" stroke-linecap="round"/></svg>
+  </div>
+  <div class="bird" style="top: 28%; width: 15px; height: 8px; animation-duration: 48s; animation-delay: -14s;">
+    <svg viewBox="0 0 24 12"><path class="wing" d="M0 8 Q6 1 12 8 Q18 1 24 8" stroke="currentColor" stroke-width="1.9" fill="none" stroke-linecap="round"/></svg>
+  </div>
+  <div class="bird" style="top: 33%; width: 19px; height: 10px; animation-duration: 70s; animation-delay: -55s;">
+    <svg viewBox="0 0 24 12"><path class="wing" d="M0 8 Q6 1 12 8 Q18 1 24 8" stroke="currentColor" stroke-width="1.9" fill="none" stroke-linecap="round"/></svg>
+  </div>
+
+  <!-- Wind-blown leaves -->
+  <div class="wind-layer" id="windLayer"></div>
+</div>

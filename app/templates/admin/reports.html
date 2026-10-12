@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Admin — Reports — {{ cfg.site_name }}{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Abuse reports</h1><p class="sub">{{ reports|length }} report{{ 's' if reports|length != 1 }}</p></div></div>
+
+<div class="tabs" role="tablist">
+  <a class="tab" href="/admin" role="tab" aria-selected="false">Overview</a>
+  <a class="tab" href="/admin/users" role="tab" aria-selected="false">Users</a>
+  <a class="tab" href="/admin/links" role="tab" aria-selected="false">Links</a>
+  <a class="tab" href="/admin/domains" role="tab" aria-selected="false">Domains</a>
+  <a class="tab active" href="/admin/reports" role="tab" aria-selected="true">Reports</a>
+  <a class="tab" href="/admin/files" role="tab" aria-selected="false">Files</a>
+  <a class="tab" href="/admin/audit" role="tab" aria-selected="false">Audit log</a>
+  <a class="tab" href="/admin/settings" role="tab" aria-selected="false">Settings</a>
+</div>
+
+{% if reports %}
+<div class="card card-flat" style="padding:0">
+  <div class="table-wrap" style="border:0">
+    <table class="table">
+      <thead><tr><th>Target</th><th>Reason</th><th>Reporter</th><th>Status</th><th>Received</th><th class="text-right">Actions</th></tr></thead>
+      <tbody>
+        {% for r in reports %}
+        <tr>
+          <td class="mono strong">{% if r.target_slug %}/@{{ r.target_slug }}{% else %}{{ r.target_url or '—' }}{% endif %}</td>
+          <td class="small ellipsis" style="max-width:280px" title="{{ r.reason }}">{{ r.reason }}</td>
+          <td class="small muted">{{ r.reporter_email or 'Anonymous' }}</td>
+          <td>{% if r.status == 'open' %}<span class="badge badge-warning">Open</span>{% elif r.status == 'resolved' %}<span class="badge badge-success">Resolved</span>{% else %}<span class="badge badge-muted">{{ r.status }}</span>{% endif %}</td>
+          <td class="muted small">{{ r.created_at }}</td>
+          <td>
+            <div class="table-actions">
+              {% if r.status == 'open' %}
+              <form method="post" action="/admin/reports/{{ r.id }}/resolve" style="margin:0"><input type="hidden" name="_csrf" value="{{ csrf }}"><button class="btn btn-success btn-sm" type="submit"><svg aria-hidden="true"><use href="#i-check"/></svg>Resolve</button></form>
+              {% endif %}
+              <form method="post" action="/admin/reports/{{ r.id }}/delete" data-confirm="Delete this report?" style="margin:0"><input type="hidden" name="_csrf" value="{{ csrf }}"><button class="icon-btn danger" title="Delete" aria-label="Delete report"><svg aria-hidden="true"><use href="#i-trash"/></svg></button></form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card"><div class="empty-state"><svg aria-hidden="true"><use href="#i-flag"/></svg><h3>No reports</h3><p>Abuse reports will appear here.</p></div></div>
+{% endif %}
+{% endblock %}

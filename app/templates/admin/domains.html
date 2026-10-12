@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Admin — Domains — {{ cfg.site_name }}{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Domain review</h1><p class="sub">Approve or reject custom domain requests.</p></div></div>
+
+<div class="tabs" role="tablist">
+  <a class="tab" href="/admin" role="tab" aria-selected="false">Overview</a>
+  <a class="tab" href="/admin/users" role="tab" aria-selected="false">Users</a>
+  <a class="tab" href="/admin/links" role="tab" aria-selected="false">Links</a>
+  <a class="tab active" href="/admin/domains" role="tab" aria-selected="true">Domains</a>
+  <a class="tab" href="/admin/reports" role="tab" aria-selected="false">Reports</a>
+  <a class="tab" href="/admin/files" role="tab" aria-selected="false">Files</a>
+  <a class="tab" href="/admin/audit" role="tab" aria-selected="false">Audit log</a>
+  <a class="tab" href="/admin/settings" role="tab" aria-selected="false">Settings</a>
+</div>
+
+{% if domains %}
+<div class="card card-flat" style="padding:0">
+  <div class="table-wrap" style="border:0">
+    <table class="table">
+      <thead><tr><th>Domain</th><th>Owner</th><th>Status</th><th>Requested</th><th class="text-right">Actions</th></tr></thead>
+      <tbody>
+        {% for d in domains %}
+        <tr>
+          <td class="mono strong">{{ d.domain }}</td>
+          <td class="small">{{ d.owner_email }}</td>
+          <td>
+            {% if d.status == 'verified' %}<span class="badge badge-success">Verified</span>
+            {% elif d.status == 'pending' %}<span class="badge badge-warning">Pending</span>
+            {% elif d.status == 'rejected' %}<span class="badge badge-danger">Rejected</span>
+            {% else %}<span class="badge badge-muted">{{ d.status }}</span>{% endif %}
+          </td>
+          <td class="muted small">{{ d.created_at }}</td>
+          <td>
+            <div class="table-actions">
+              {% if d.status == 'pending' %}
+              <form method="post" action="/admin/domains/{{ d.id }}/approve" style="margin:0"><input type="hidden" name="_csrf" value="{{ csrf }}"><button class="btn btn-success btn-sm" type="submit"><svg aria-hidden="true"><use href="#i-check"/></svg>Approve</button></form>
+              <form method="post" action="/admin/domains/{{ d.id }}/reject" style="margin:0"><input type="hidden" name="_csrf" value="{{ csrf }}"><button class="btn btn-ghost btn-sm" type="submit">Reject</button></form>
+              {% endif %}
+              <form method="post" action="/admin/domains/{{ d.id }}/delete" data-confirm="Delete domain {{ d.domain }}?" style="margin:0"><input type="hidden" name="_csrf" value="{{ csrf }}"><button class="icon-btn danger" title="Delete" aria-label="Delete domain {{ d.domain }}"><svg aria-hidden="true"><use href="#i-trash"/></svg></button></form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card"><div class="empty-state"><svg aria-hidden="true"><use href="#i-globe"/></svg><p>No domains to review.</p></div></div>
+{% endif %}
+{% endblock %}

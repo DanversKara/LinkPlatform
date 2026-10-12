@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Links — {{ cfg.site_name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Links</h1>
+    <p class="sub">{{ pagination.total if pagination else links|length }} link{{ 's' if (pagination.total if pagination else links|length) != 1 }}</p>
+  </div>
+  <a class="btn btn-primary" href="/links/new"><svg aria-hidden="true"><use href="#i-plus"/></svg>New link</a>
+</div>
+
+<form class="search-bar" method="get" action="/links" role="search">
+  <input class="input" type="search" name="q" placeholder="Search title, slug, or URL…" value="{{ q or '' }}" aria-label="Search links">
+  <button class="btn btn-ghost" type="submit"><svg aria-hidden="true"><use href="#i-search"/></svg>Search</button>
+</form>
+
+{% if links %}
+<div class="card card-flat" style="padding:0">
+  <div class="table-wrap" style="border:0">
+    <table class="table" id="links-table">
+      <thead><tr><th>Link</th><th>Destination</th><th class="text-right">Clicks</th><th>Status</th><th>Created</th><th class="text-right">Actions</th></tr></thead>
+      <tbody>
+        {% for l in links %}
+        <tr>
+          <td>
+            <a class="row-link" href="/links/{{ l.id }}/stats">{{ l.title or l.code }}</a><br>
+            <span class="short-chip"><span class="mono tiny">/{{ l.code }}</span>
+              <button class="icon-btn" style="width:26px;height:26px" data-copy="/{{ l.code }}" title="Copy short path" aria-label="Copy short path for {{ l.code }}"><svg aria-hidden="true"><use href="#i-copy"/></svg></button>
+            </span>
+          </td>
+          <td class="ellipsis muted small" title="{{ l.original_url }}">{{ l.original_url }}</td>
+          <td class="num text-right strong">{{ l.clicks_cached }}</td>
+          <td>
+            {% if l.is_active %}<span class="badge badge-success"><svg aria-hidden="true"><use href="#i-check"/></svg>Active</span>
+            {% else %}<span class="badge badge-muted"><svg aria-hidden="true"><use href="#i-x"/></svg>Disabled</span>{% endif %}
+          </td>
+          <td class="muted small">{{ l.created_at }}</td>
+          <td>
+            <div class="table-actions">
+              <a class="icon-btn" href="/links/{{ l.id }}/stats" title="Statistics" aria-label="Statistics for {{ l.code }}"><svg aria-hidden="true"><use href="#i-chart"/></svg></a>
+              <a class="icon-btn" href="/links/{{ l.id }}/edit" title="Edit" aria-label="Edit {{ l.code }}"><svg aria-hidden="true"><use href="#i-edit"/></svg></a>
+              <a class="icon-btn danger" href="/links/{{ l.id }}/delete" title="Delete" aria-label="Delete {{ l.code }}"><svg aria-hidden="true"><use href="#i-trash"/></svg></a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if pagination and pagination.pages > 1 %}
+<nav class="pagination" aria-label="Pagination">
+  {% if pagination.page > 1 %}<a class="btn btn-ghost btn-sm" href="/links?q={{ q|urlencode }}&page={{ pagination.page - 1 }}">Previous</a>{% endif %}
+  <span class="page-info">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+  {% if pagination.page < pagination.pages %}<a class="btn btn-ghost btn-sm" href="/links?q={{ q|urlencode }}&page={{ pagination.page + 1 }}">Next</a>{% endif %}
+</nav>
+{% endif %}
+{% else %}
+<div class="card"><div class="empty-state">
+  <svg aria-hidden="true"><use href="#i-link"/></svg>
+  <h3>{% if q %}No links match “{{ q }}”{% else %}No links yet{% endif %}</h3>
+  <p>{% if q %}Try a different search, or create a new link.{% else %}Create your first short link and start tracking clicks.{% endif %}</p>
+  <a class="btn btn-primary" href="/links/new"><svg aria-hidden="true"><use href="#i-plus"/></svg>New link</a>
+</div></div>
+{% endif %}
+{% endblock %}

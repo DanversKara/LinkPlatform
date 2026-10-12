@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Report abuse — {{ cfg.site_name }}{% endblock %}
+{% block content %}
+<div class="container-narrow" style="margin:0 auto">
+  <div class="card">
+    <h1 class="mb-2">Report abuse</h1>
+    <p class="muted mb-4">{% if target_slug %}You are reporting the bio page <strong>/@{{ target_slug }}</strong>.{% else %}Tell us about content that violates our terms (spam, phishing, malware, or other abuse).{% endif %}</p>
+    {% if error %}
+    <div class="alert alert-error" role="alert"><svg aria-hidden="true"><use href="#i-alert"/></svg><span>{{ error }}</span></div>
+    {% endif %}
+    <form method="post" action="{% if target_slug %}/report/{{ target_slug }}{% else %}/report{% endif %}" novalidate>
+      <input type="hidden" name="_csrf" value="{{ csrf }}">
+      <div class="field">
+        <label class="label" for="reason">What is the problem? <span class="req" aria-hidden="true">*</span></label>
+        <textarea class="textarea" id="reason" name="reason" required maxlength="2000" placeholder="Describe the abusive content and where you found it…"></textarea>
+      </div>
+      <div class="field">
+        <label class="label" for="reporter_email">Your email (optional)</label>
+        <input class="input" type="email" id="reporter_email" name="reporter_email" maxlength="255" placeholder="you@example.com">
+        <div class="hint">Only used if we need more detail. Never published.</div>
+      </div>
+      <button class="btn btn-primary" type="submit"><svg aria-hidden="true"><use href="#i-flag"/></svg>Submit report</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

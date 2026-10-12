@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+{%- set p = palette -%}
+<html lang="en" style="--primary:{{ p.primary }};--secondary:{{ p.secondary }};--accent:{{ p.accent }};--bg:{{ p.bg }};--text:{{ p.text }};--text-muted:{{ p.muted }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ profile_user.display_name }} | Links</title>
+<meta name="description" content="{{ profile_user.bio or (profile_user.display_name ~ ' on ' ~ cfg.site_name) }}">
+<meta name="theme-color" content="{{ p.bg }}">
+<meta property="og:title" content="{{ profile_user.display_name }}">
+<meta property="og:description" content="{{ profile_user.bio or (profile_user.display_name ~ ' on ' ~ cfg.site_name) }}">
+<meta property="og:type" content="profile">
+{% if profile_user.avatar_path %}<meta property="og:image" content="{{ cfg.base_url }}{{ profile_user.avatar_path }}">{% endif %}
+{% if preview %}<meta name="robots" content="noindex">{% endif %}
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='{{ p.primary|replace('#','%23') }}'/%3E%3Ctext x='16' y='22' font-size='17' font-family='sans-serif' font-weight='700' text-anchor='middle' fill='%23000'%3E{{ (profile_user.display_name or '?')[0]|upper|urlencode }}%3C/text%3E%3C/svg%3E">
+<link rel="preload" href="/static/fonts/outfit-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/static/css/bio.css?v={{ sv }}">
+</head>
+<body class="bio-page bio-theme-{{ theme }} layout-{{ prefs.layout }}{% if not prefs.scene %} no-scene{% endif %}{% if not prefs.tech %} no-tech{% endif %}{% if preview %} is-preview{% endif %}"
+      data-theme-id="{{ theme }}"
+      data-effects="{{ prefs.effects }}"
+      data-seasonal-tagline="{{ '1' if prefs.seasonal_tagline else '0' }}"
+      data-name="{{ profile_user.display_name }}"
+      data-preview="{{ '1' if preview else '0' }}"
+      data-custom-primary="{{ profile_user.accent_color if prefs.custom_accent else '' }}">
+
+{% include "bio/_scene.html" %}
+
+<div class="bg-glow" id="bgGlow" aria-hidden="true"></div>
+<div class="holiday-bg" id="holidayBg" aria-hidden="true"></div>
+
+{% if profile_user.is_verified %}
+<span class="verified-badge" id="verifiedBadge" role="img" aria-label="Verified account" title="Verified by {{ cfg.site_name }}">
+  <span class="vb-seal">{{ ui.verified|safe }}</span><span class="vb-text">Verified</span>
+</span>
+{% endif %}
+
+<div id="a11y-scope">
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <main id="main-content">
+    <!-- ═══ HERO ═══ -->
+    <header class="hero bio-hero">
+      <div class="tech-layer" id="heroLayer"></div>
+      <div class="hero-content">
+        <div class="avatar-wrap">
+          <div class="avatar-ring"></div>
+          {% if profile_user.avatar_path %}
+          <img src="{{ profile_user.avatar_path }}" alt="{{ profile_user.display_name }}" class="avatar" id="profileAvatar">
+          {% else %}
+          <div class="avatar-initial" id="profileAvatar" aria-hidden="true">{{ (profile_user.display_name or '?')[0]|upper }}</div>
+          {% endif %}
+        </div>
+        <h1 class="name-row"><span id="profileName">{{ profile_user.display_name }}</span>{% if profile_user.is_verified %}<span class="name-seal" title="Verified by {{ cfg.site_name }}" aria-label="Verified">{{ ui.verified|safe }}</span>{% endif %}</h1>
+        <p class="tagline" id="profileBio" data-original="{{ profile_user.bio or '' }}"{% if not profile_user.bio %} hidden{% endif %}>{{ profile_user.bio }}</p>
+
+        {% if social_links %}
+        <div class="social-row bio-social-row">
+          {% for it in social_links %}
+          <a href="{{ it.url }}" title="{{ it.title }}" aria-label="{{ it.title }}" target="_blank" rel="noopener noreferrer me" class="s-link bio-social-btn">{{ it.svg|safe }}</a>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </header>
+
+    {% for sec in sections %}
+    <section class="section bio-section"{% if sec.name %} aria-labelledby="sec-{{ loop.index }}"{% endif %}>
+      {% if sec.name %}<h2 class="sec-title" id="sec-{{ loop.index }}"><span class="sec-ico" aria-hidden="true">{{ sec.svg|safe }}</span> {{ sec.name }}</h2>{% endif %}
+      {% if sec.cards %}
+      <div class="card-list">
+        {% for it in sec.cards %}
+        {% set _ico %}<div class="p-icon bio-link-ico"{% if it.color %} style="--ic:{{ it.color }}"{% endif %}>{{ it.svg|safe }}</div>{% endset %}
+        {% set _info %}<div class="p-info"><span class="p-name">{{ it.title }}</span>{% if it.desc %}<span class="p-desc">{{ it.desc }}</span>{% endif %}</div>{% endset %}
+        {% if it.kind == 'copy' %}
+        <button type="button" class="p-card" data-copy-text="{{ it.desc }}" aria-label="Copy {{ it.title }}: {{ it.desc }}">
+          {{ _ico }}{{ _info }}<span class="arr" aria-hidden="true">{{ ui.copy|safe }}</span>
+        </button>
+        {% elif it.kind == 'text' %}
+        <div class="p-card is-disabled">{{ _ico }}{{ _info }}</div>
+        {% else %}
+        <a href="{{ it.url }}" target="_blank" rel="noopener noreferrer" class="p-card bio-link">
+          {{ _ico }}{{ _info }}<span class="arr" aria-hidden="true">{{ ui.arrow|safe }}</span>
+        </a>
+        {% endif %}
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% for n in sec.notices %}
+      <div class="{{ 'notice-warn' if n.kind == 'notice_warn' else 'notice-urgent' }}" role="note">
+        <div class="notice-head" style="color:{{ n.color or ('#ff6b5b' if n.kind == 'notice_warn' else '#ffd447') }}">
+          {{ (ui.warn if n.kind == 'notice_warn' else ui.info)|safe }}
+          {% if n.url %}<a href="{{ n.url }}" target="_blank" rel="noopener noreferrer">{{ n.title }}</a>{% else %}<span>{{ n.title }}</span>{% endif %}
+        </div>
+        {% if n.desc %}<p style="color:var(--text-muted)">{{ n.desc }}</p>{% endif %}
+      </div>
+      {% endfor %}
+    </section>
+    {% endfor %}
+
+    {% if not bio_links %}
+    <section class="section"><p class="empty-state">No links yet — check back soon.</p></section>
+    {% endif %}
+
+    {% if prefs.show_share or prefs.show_report %}
+    <div class="action-row">
+      {% if prefs.show_share %}
+      <button type="button" class="p-card" id="shareBtn" data-share-title="{{ profile_user.display_name }}">
+        <span style="color:var(--primary);display:inline-flex">{{ ui.share|safe }}</span><span class="p-name">SHARE PAGE</span>
+      </button>
+      {% endif %}
+      {% if prefs.show_report %}
+      <a href="/report/{{ profile_user.slug }}" class="p-card" rel="nofollow" aria-label="Report this profile">
+        <span style="color:#ff6b5b;display:inline-flex">{{ ui.flag|safe }}</span><span class="p-name">REPORT</span>
+      </a>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <footer class="footer bio-footer">
+      <div class="tech-layer footer-layer" id="footerLayer"></div>
+      <p id="footerText">{{ footer_text }}</p>
+      {% if prefs.show_date %}<p style="margin-top:4px;font-size:12px;opacity:0.75" id="dateDisplay"></p>{% endif %}
+      <p class="made-with">Made with <a href="/">{{ cfg.site_name }}</a></p>
+    </footer>
+  </main>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+
+{% if prefs.show_a11y %}
+<button type="button" id="a11y-toggle" aria-haspopup="dialog" aria-expanded="false" aria-controls="a11y-panel" aria-label="Open accessibility options">{{ ui.access|safe }}</button>
+<div id="a11y-panel" role="dialog" aria-modal="false" aria-labelledby="a11y-panel-title">
+  <div class="a11y-head">
+    <h2 id="a11y-panel-title">{{ ui.access|safe }} Accessibility</h2>
+    <button type="button" class="a11y-close" id="a11yClose" aria-label="Close accessibility options">{{ ui.close|safe }}</button>
+  </div>
+  <div class="a11y-body">
+    <div class="a11y-group-label">Text</div>
+    <div class="a11y-row">
+      <label id="a11yFontSizeLabel">Text size</label>
+      <div class="a11y-stepper" role="group" aria-labelledby="a11yFontSizeLabel">
+        <button type="button" data-a11y-action="fontsize-dec" aria-label="Decrease text size">−</button>
+        <span id="a11yFontSizeVal">100%</span>
+        <button type="button" data-a11y-action="fontsize-inc" aria-label="Increase text size">+</button>
+      </div>
+    </div>
+    {% for id, label in [("a11y-readable-font","Readable font"),("a11y-line-spacing","Line spacing"),("a11y-letter-spacing","Letter spacing"),("a11y-highlight-links","Highlight links")] %}
+    <div class="a11y-row"><label for="{{ id }}">{{ label }}</label><button type="button" class="a11y-switch" id="{{ id }}" role="switch" aria-checked="false"><span class="knob"></span></button></div>
+    {% endfor %}
+    <div class="a11y-group-label">Color &amp; contrast</div>
+    <div class="a11y-row"><label for="a11y-high-contrast">High contrast</label><button type="button" class="a11y-switch" id="a11y-high-contrast" role="switch" aria-checked="false"><span class="knob"></span></button></div>
+    <div class="a11y-row">
+      <label for="a11y-color-theme">Color theme</label>
+      <select class="a11y-select" id="a11y-color-theme">
+        <option value="">Default</option>
+        <option value="yellowblack">Yellow on black</option>
+        <option value="sepia">Sepia</option>
+      </select>
+    </div>
+    <div class="a11y-row"><label for="a11y-grayscale">Grayscale</label><button type="button" class="a11y-switch" id="a11y-grayscale" role="switch" aria-checked="false"><span class="knob"></span></button></div>
+    <div class="a11y-group-label">Navigation &amp; motion</div>
+    {% for id, label in [("a11y-stop-animations","Stop animations"),("a11y-enhanced-focus","Enhanced keyboard focus"),("a11y-big-cursor","Large cursor"),("a11y-tts","Read page aloud")] %}
+    <div class="a11y-row"><label for="{{ id }}">{{ label }}</label><button type="button" class="a11y-switch" id="{{ id }}" role="switch" aria-checked="false"><span class="knob"></span></button></div>
+    {% endfor %}
+    <button type="button" class="a11y-reset" id="a11yReset">Reset all</button>
+    <p class="a11y-note">Screen-reader support and image alt text are built into this page, so they always work with your assistive technology.</p>
+  </div>
+</div>
+<div id="a11y-tts-bar">
+  <button type="button" id="a11yTtsPause" aria-label="Pause reading">{{ ui.pause|safe }}</button>
+  <button type="button" id="a11yTtsStop" aria-label="Stop reading">{{ ui.stop|safe }}</button>
+  <span>Reading page…</span>
+</div>
+{% endif %}
+
+<script type="application/json" id="bioPalettes">{{ palette_json|safe }}</script>
+<script src="/static/js/bio-page.js?v={{ sv }}" defer></script>
+</body>
+</html>

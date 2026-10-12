@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Log in — {{ cfg.site_name }}{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="card auth-card">
+    <a class="brand" href="/"><span class="brand-mark"><svg aria-hidden="true"><use href="#i-link"/></svg></span><span>{{ cfg.site_name }}</span></a>
+    <h1 class="auth-title">Welcome back</h1>
+    <p class="auth-sub">Log in to manage your links and bio page.</p>
+    {% if error %}
+    <div class="alert alert-error" role="alert"><svg aria-hidden="true"><use href="#i-alert"/></svg><span>{{ error }}</span></div>
+    {% endif %}
+    <form method="post" action="/login" novalidate>
+      <input type="hidden" name="_csrf" value="{{ csrf }}">
+      <input type="hidden" name="next" value="{{ next or '' }}">
+      <div class="field">
+        <label class="label" for="email">Email</label>
+        <input class="input {% if error %}error{% endif %}" type="email" id="email" name="email" autocomplete="email" required autofocus value="{{ email|default('', true) }}">
+      </div>
+      <div class="field">
+        <label class="label" for="password">Password</label>
+        <input class="input {% if error %}error{% endif %}" type="password" id="password" name="password" autocomplete="current-password" required>
+      </div>
+      <button class="btn btn-primary btn-block" type="submit">Log in</button>
+    </form>
+    {% if cfg.registration_open %}
+    <p class="auth-foot">No account yet? <a href="/register">Create one</a></p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Profile settings — {{ cfg.site_name }}{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Settings</h1><p class="sub">Manage your account.</p></div></div>
+
+<div class="tabs" role="tablist">
+  <a class="tab active" href="/settings/profile" role="tab" aria-selected="true">Profile</a>
+  <a class="tab" href="/bio/edit" role="tab" aria-selected="false">Bio page</a>
+  <a class="tab" href="/settings/tokens" role="tab" aria-selected="false">API tokens</a>
+</div>
+
+{% if error %}
+<div class="alert alert-error" role="alert"><svg aria-hidden="true"><use href="#i-alert"/></svg><span>{{ error }}</span></div>
+{% endif %}
+
+<div class="grid grid-2 gap-4" style="align-items:start">
+  <div class="card">
+    <div class="card-head"><h2>Profile</h2></div>
+    <form method="post" action="/settings/profile" novalidate>
+      <input type="hidden" name="_csrf" value="{{ csrf }}">
+      <div class="field">
+        <label class="label" for="display_name">Display name</label>
+        <input class="input" type="text" id="display_name" name="display_name" maxlength="80" required value="{{ user.display_name }}">
+      </div>
+      <div class="field">
+        <label class="label" for="email">Email</label>
+        <input class="input" type="email" id="email" name="email" value="{{ user.email }}" autocomplete="email" required>
+        <div class="hint">This is the email you log in with.</div>
+      </div>
+      <div class="field">
+        <label class="label" for="email_password">Current password <span class="muted small">(only needed to change your email)</span></label>
+        <input class="input" type="password" id="email_password" name="email_password" autocomplete="current-password">
+      </div>
+      <button class="btn btn-primary" type="submit">Save changes</button>
+    </form>
+    <div class="divider"></div>
+    <p class="small muted mb-3">Your public bio page: <a href="/@{{ user.slug }}" target="_blank" rel="noopener">/@{{ user.slug }}</a> — photo, tagline, theme, links and notices are all edited in the bio editor.</p>
+    <div class="flex gap-2" style="flex-wrap:wrap">
+      <a class="btn btn-primary btn-sm" href="/bio/edit"><svg aria-hidden="true"><use href="#i-edit"/></svg>Edit bio page</a>
+      <a class="btn btn-ghost btn-sm" href="/bio/edit?tab=appearance"><svg aria-hidden="true"><use href="#i-sun"/></svg>Change theme</a>
+      <a class="btn btn-ghost btn-sm" href="/@{{ user.slug }}" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#i-eye"/></svg>View</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>Password</h2></div>
+    <form method="post" action="/settings/password" novalidate>
+      <input type="hidden" name="_csrf" value="{{ csrf }}">
+      <div class="field">
+        <label class="label" for="current_password">Current password</label>
+        <input class="input" type="password" id="current_password" name="current_password" autocomplete="current-password" required>
+      </div>
+      <div class="field">
+        <label class="label" for="new_password">New password</label>
+        <input class="input" type="password" id="new_password" name="new_password" data-pw-strength autocomplete="new-password" required minlength="8" maxlength="128">
+      </div>
+      <button class="btn btn-ghost" type="submit">Change password</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

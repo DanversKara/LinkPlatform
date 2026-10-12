@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}{{ link.landing_title or link.title or link.code }} — {{ cfg.site_name }}{% endblock %}
+{% block content %}
+<div class="interstitial">
+  <div class="card inter-card" style="padding:0;overflow:hidden">
+    {% if link.landing_image %}<img class="hero-img" src="{{ link.landing_image }}" alt="">{% endif %}
+    <div class="inter-body">
+      <h1>{{ link.landing_title or link.title or 'You are leaving ' + cfg.site_name }}</h1>
+      {% if link.landing_body %}<p>{{ link.landing_body }}</p>{% endif %}
+      <a class="btn btn-primary btn-lg btn-block" href="{{ link.original_url }}" rel="noopener">Continue to link<svg aria-hidden="true"><use href="#i-external"/></svg></a>
+      <div class="inter-powered">Powered by <a href="/">{{ cfg.site_name }}</a></div>
+    </div>
+  </div>
+</div>
+{% endblock %}

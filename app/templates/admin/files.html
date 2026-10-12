@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Admin — Files — {{ cfg.site_name }}{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>All files</h1><p class="sub">{{ total }} file{{ 's' if total != 1 }} · {{ total_size }}</p></div></div>
+
+<div class="tabs" role="tablist">
+  <a class="tab" href="/admin" role="tab" aria-selected="false">Overview</a>
+  <a class="tab" href="/admin/users" role="tab" aria-selected="false">Users</a>
+  <a class="tab" href="/admin/links" role="tab" aria-selected="false">Links</a>
+  <a class="tab" href="/admin/domains" role="tab" aria-selected="false">Domains</a>
+  <a class="tab" href="/admin/reports" role="tab" aria-selected="false">Reports</a>
+  <a class="tab active" href="/admin/files" role="tab" aria-selected="true">Files</a>
+  <a class="tab" href="/admin/audit" role="tab" aria-selected="false">Audit log</a>
+  <a class="tab" href="/admin/settings" role="tab" aria-selected="false">Settings</a>
+</div>
+
+{% if files %}
+<div class="card card-flat" style="padding:0">
+  <div class="table-wrap" style="border:0">
+    <table class="table">
+      <thead><tr><th>File</th><th>Owner</th><th>Size</th><th>Uploaded</th><th class="text-right">Actions</th></tr></thead>
+      <tbody>
+        {% for f in files %}
+        <tr>
+          <td><strong>{{ f.original_name }}</strong><br><span class="tiny muted mono">{{ f.url }}</span></td>
+          <td class="small">{{ f.owner_email }}</td>
+          <td class="num muted">{{ f.size }}</td>
+          <td class="muted small">{{ f.created_at }}</td>
+          <td>
+            <div class="table-actions">
+              <a class="icon-btn" href="{{ f.url }}" target="_blank" rel="noopener" title="Open" aria-label="Open {{ f.original_name }}"><svg aria-hidden="true"><use href="#i-external"/></svg></a>
+              <form method="post" action="/admin/files/{{ f.id }}/delete" data-confirm="Delete “{{ f.original_name }}”? Links to it will break." style="margin:0"><input type="hidden" name="_csrf" value="{{ csrf }}"><button class="icon-btn danger" title="Delete" aria-label="Delete {{ f.original_name }}"><svg aria-hidden="true"><use href="#i-trash"/></svg></button></form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card"><div class="empty-state"><svg aria-hidden="true"><use href="#i-file"/></svg><p>No files uploaded.</p></div></div>
+{% endif %}
+{% endblock %}

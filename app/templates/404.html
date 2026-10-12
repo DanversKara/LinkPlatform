@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Page not found — {{ cfg.site_name }}{% endblock %}
+{% block content %}
+<div class="container-narrow" style="margin:0 auto">
+  <div class="empty-state">
+    <div class="empty-icon"><svg aria-hidden="true"><use href="#i-search"/></svg></div>
+    <h2>Page not found</h2>
+    <p class="muted">The page you are looking for does not exist or has been moved.</p>
+    <div class="flex gap-2" style="justify-content:center">
+      <a class="btn btn-primary" href="{% if user %}/dashboard{% else %}/{% endif %}">{% if user %}Back to dashboard{% else %}Back home{% endif %}</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

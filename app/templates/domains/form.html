@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Add domain — {{ cfg.site_name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Add a custom domain</h1><p class="sub">Point your domain at this server, then verify it.</p></div>
+  <a class="btn btn-ghost" href="/domains">Back to domains</a>
+</div>
+
+<div class="grid grid-2 gap-4" style="align-items:start">
+  <div class="card">
+    <form method="post" action="/domains/new" novalidate>
+      <input type="hidden" name="_csrf" value="{{ csrf }}">
+      <div class="field">
+        <label class="label" for="domain">Domain <span class="req" aria-hidden="true">*</span></label>
+        <input class="input mono {% if error %}error{% endif %}" type="text" id="domain" name="domain" required maxlength="255" placeholder="go.example.com" value="{{ domain or '' }}" autocapitalize="off" spellcheck="false">
+        {% if error %}<div class="field-error">{{ error }}</div>{% endif %}
+        <div class="hint">A subdomain like <span class="mono">go.example.com</span> works best.</div>
+      </div>
+      <button class="btn btn-primary" type="submit">Add domain</button>
+    </form>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>DNS setup</h2></div>
+    <p class="muted small mb-3">Create this DNS record at your domain provider:</p>
+    <dl class="kv">
+      <dt>Type</dt><dd class="mono">A</dd>
+      <dt>Name / Host</dt><dd class="mono">@ (or your subdomain)</dd>
+      <dt>Value</dt><dd class="mono">{{ cfg.server_ip or 'YOUR_SERVER_IP' }}</dd>
+      <dt>TTL</dt><dd class="mono">300</dd>
+    </dl>
+    <div class="divider"></div>
+    <p class="small muted">After the record propagates (usually a few minutes), click <strong>Verify DNS</strong> on the domains list. HTTPS is provisioned automatically when a domain is served.</p>
+  </div>
+</div>
+{% endblock %}

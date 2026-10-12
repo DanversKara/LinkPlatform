@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — {{ cfg.site_name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Welcome back, {{ user.display_name }}</h1>
+    <p class="sub">Here is how your links are performing.</p>
+  </div>
+  <a class="btn btn-primary" href="/links/new"><svg aria-hidden="true"><use href="#i-plus"/></svg>New link</a>
+</div>
+
+<div class="stat-grid">
+  <div class="stat-card"><span class="num">{{ links_count }}</span><span class="lbl">Active links</span></div>
+  <div class="stat-card"><span class="num">{{ clicks_total }}</span><span class="lbl">Total clicks</span></div>
+  <div class="stat-card"><span class="num">{{ views_total }}</span><span class="lbl">Bio page views</span></div>
+  <div class="stat-card"><span class="num">{% if ctr is not none %}{{ ctr }}%{% else %}—{% endif %}</span><span class="lbl">Click-through</span></div>
+</div>
+
+<div class="grid grid-2 gap-4 mb-5" style="align-items:start">
+  <div class="card chart-card">
+    <div class="card-head"><h2>Clicks — last 30 days</h2></div>
+    {% if chart_svg %}{{ chart_svg|safe }}{% else %}<div class="empty-state"><svg aria-hidden="true"><use href="#i-chart"/></svg><p>No click data yet.</p></div>{% endif %}
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>Top links</h2><a class="btn btn-ghost btn-sm" href="/links">View all</a></div>
+    {% if top_links %}
+    <div class="table-wrap" style="border:0">
+      <table class="table">
+        <thead><tr><th>Link</th><th class="text-right">Clicks</th></tr></thead>
+        <tbody>
+          {% for l in top_links %}
+          <tr>
+            <td><a class="row-link" href="/links/{{ l.id }}/stats">{{ l.title or l.code }}</a><br><span class="tiny muted mono">{{ l.code }}</span></td>
+            <td class="num text-right strong">{{ l.clicks }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state"><svg aria-hidden="true"><use href="#i-link"/></svg><h3>No links yet</h3><p>Create your first short link to start tracking clicks.</p><a class="btn btn-primary btn-sm" href="/links/new">Create link</a></div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head"><h2>Recent clicks</h2><a class="btn btn-ghost btn-sm" href="/links">All links</a></div>
+  {% if recent_clicks %}
+  <div class="table-wrap" style="border:0">
+    <table class="table">
+      <thead><tr><th>Link</th><th>When</th><th>Device</th><th>Browser</th><th>Country</th></tr></thead>
+      <tbody>
+        {% for c in recent_clicks %}
+        <tr>
+          <td class="mono">{{ c.code }}</td>
+          <td class="muted">{{ c.ts }}</td>
+          <td>{{ c.device or '—' }}</td>
+          <td>{{ c.browser or '—' }}</td>
+          <td>{{ c.country or '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><svg aria-hidden="true"><use href="#i-eye"/></svg><p>No clicks recorded yet. Share a link to see activity here.</p></div>
+  {% endif %}
+</div>
+{% endblock %}

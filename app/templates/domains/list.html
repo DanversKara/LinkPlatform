@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Domains — {{ cfg.site_name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Custom domains</h1>
+    <p class="sub">Use your own domain for short links.</p>
+  </div>
+  <a class="btn btn-primary" href="/domains/new"><svg aria-hidden="true"><use href="#i-plus"/></svg>Add domain</a>
+</div>
+
+{% if domains %}
+<div class="card card-flat" style="padding:0">
+  <div class="table-wrap" style="border:0">
+    <table class="table">
+      <thead><tr><th>Domain</th><th>Status</th><th>Verified</th><th class="text-right">Actions</th></tr></thead>
+      <tbody>
+        {% for d in domains %}
+        <tr>
+          <td class="mono strong">{{ d.domain }}</td>
+          <td>
+            {% if d.status == 'verified' %}<span class="badge badge-success"><svg aria-hidden="true"><use href="#i-check"/></svg>Verified</span>
+            {% elif d.status == 'pending' %}<span class="badge badge-warning"><svg aria-hidden="true"><use href="#i-clock"/></svg>Pending</span>
+            {% else %}<span class="badge badge-danger"><svg aria-hidden="true"><use href="#i-x"/></svg>{{ d.status }}</span>{% endif %}
+          </td>
+          <td class="muted small">{{ d.verified_at or '—' }}</td>
+          <td>
+            <div class="table-actions">
+              {% if d.status != 'verified' %}
+              <form method="post" action="/domains/{{ d.id }}/verify" style="margin:0"><input type="hidden" name="_csrf" value="{{ csrf }}"><button class="btn btn-subtle btn-sm" type="submit">Verify DNS</button></form>
+              {% endif %}
+              <form method="post" action="/domains/{{ d.id }}/delete" data-confirm="Remove domain {{ d.domain }}? Links using it will stop working." style="margin:0"><input type="hidden" name="_csrf" value="{{ csrf }}"><button class="icon-btn danger" title="Delete" aria-label="Delete domain {{ d.domain }}"><svg aria-hidden="true"><use href="#i-trash"/></svg></button></form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card"><div class="empty-state">
+  <svg aria-hidden="true"><use href="#i-globe"/></svg>
+  <h3>No custom domains</h3>
+  <p>Add your own domain to brand your short links.</p>
+  <a class="btn btn-primary" href="/domains/new"><svg aria-hidden="true"><use href="#i-plus"/></svg>Add domain</a>
+</div></div>
+{% endif %}
+{% endblock %}
