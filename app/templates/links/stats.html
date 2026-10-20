@@ -4,7 +4,8 @@
 <div class="page-head">
   <div>
     <h1>{{ link.title or link.code }}</h1>
-    <p class="sub"><span class="mono">/{{ link.code }}</span> → <a href="{{ link.original_url }}" target="_blank" rel="noopener">{{ link.original_url }}</a></p>
+    <p class="sub"><a class="mono" href="{{ short_url }}" target="_blank" rel="noopener">{{ short_url.split('://', 1)[1] }}</a>
+      <button class="icon-btn" style="width:26px;height:26px;vertical-align:middle" data-copy="{{ short_url }}" title="Copy short link" aria-label="Copy short link"><svg aria-hidden="true"><use href="#i-copy"/></svg></button> → <a href="{{ link.original_url }}" target="_blank" rel="noopener">{{ link.original_url }}</a></p>
   </div>
   <div class="flex gap-2">
     <a class="btn btn-ghost" href="/links/{{ link.id }}/edit"><svg aria-hidden="true"><use href="#i-edit"/></svg>Edit</a>

@@ -13,7 +13,7 @@ from ..deps import csrf_protect, log_audit, require_user
 from ..models import Domain, Link, User
 from ..render import Redirect, T
 from ..security import RateLimiter, get_client_ip, valid_domain, valid_url
-from ..utils import utcnow
+from ..utils import reset_domain_cache, utcnow
 
 router = APIRouter(prefix="/domains", dependencies=[Depends(csrf_protect)])
 domain_limiter = RateLimiter()
@@ -133,6 +133,7 @@ async def domain_update(
     domain.root_url = root or ""
     domain.notfound_url = notfound or ""
     await db.commit()
+    reset_domain_cache(request.app)
     return Redirect("/domains", "Domain settings saved.")
 
 
@@ -147,26 +148,31 @@ async def domain_verify(domain_id: int, request: Request, db: AsyncSession = Dep
     if domain.status == "verified":
         return Redirect("/domains", "Domain is already verified.")
     ok = False
-    try:
-        async with httpx.AsyncClient(timeout=8.0) as client:
-            resp = await client.get(
-                f"http://{domain.domain}/api/health",
-                headers={"Host": domain.domain},
-                follow_redirects=False,
-            )
-            ok = resp.status_code == 200 and resp.json().get("ok") is True
-    except Exception:
-        ok = False
+    # Try HTTPS first (Caddy on-demand TLS / Cloudflare), then plain HTTP.
+    # Redirects are followed so an http->https upgrade doesn't fail the check.
+    async with httpx.AsyncClient(timeout=8.0, follow_redirects=True,
+                                 max_redirects=3) as client:
+        for scheme in ("https", "http"):
+            try:
+                resp = await client.get(f"{scheme}://{domain.domain}/api/health")
+                if (resp.status_code == 200
+                        and resp.url.host == domain.domain
+                        and resp.json().get("ok") is True):
+                    ok = True
+                    break
+            except Exception:
+                continue
     if ok:
         domain.status = "verified"
         domain.verified_at = utcnow()
         await log_audit(db, "domain_verify", detail=f"domain={domain.domain}",
                         actor_id=user.id, ip=get_client_ip(request))
         await db.commit()
+        reset_domain_cache(request.app)
         return Redirect("/domains", f"{domain.domain} verified.")
     return Redirect(
         "/domains",
-        f"Could not reach http://{domain.domain}/api/health from here. "
+        f"Could not reach {domain.domain}/api/health from here. "
         "Make sure the DNS A record points at this server and try again.",
         toast_type="error",
     )
@@ -188,4 +194,5 @@ async def domain_delete(domain_id: int, request: Request, db: AsyncSession = Dep
     await log_audit(db, "domain_delete", detail=f"domain={name}", actor_id=user.id,
                     ip=get_client_ip(request))
     await db.commit()
+    reset_domain_cache(request.app)
     return Redirect("/domains", "Domain removed. Its links now use the main domain.")

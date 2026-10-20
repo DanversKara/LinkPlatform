@@ -46,6 +46,16 @@ async def _not_found(request: Request, domain: dict | None):
 
 @router.get("/s/{code}")
 async def short_redirect(code: str, request: Request):
+    return await _serve_code(code, request)
+
+
+async def bare_code_redirect(code: str, request: Request):
+    """``/{code}`` without the ``/s/`` prefix. Registered last in main.py so
+    every real page route wins; only otherwise-unmatched paths land here."""
+    return await _serve_code(code, request)
+
+
+async def _serve_code(code: str, request: Request):
     if not _CODE_RE.fullmatch(code):
         return await _not_found(request, request.scope.get("state", {}).get("domain"))
     state = request.scope.get("state", {})
@@ -55,9 +65,10 @@ async def short_redirect(code: str, request: Request):
     async with AsyncSessionLocal() as db:
         stmt = select(Link).where(Link.code == code, Link.is_active == True)  # noqa: E712
         if domain_id:
+            # On a custom domain, only that domain's links resolve.
             stmt = stmt.where(Link.domain_id == domain_id)
-        else:
-            stmt = stmt.where(Link.domain_id.is_(None))
+        # On the main host, codes are globally unique, so any link resolves —
+        # including ones assigned to a custom domain whose DNS/TLS isn't live yet.
         link = (await db.execute(stmt)).scalar_one_or_none()
 
     now = utcnow()

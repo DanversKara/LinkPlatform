@@ -14,7 +14,7 @@ from ..deps import require_api_scope
 from ..models import BioLink, Click, Domain, Link, User
 from ..render import THEME_IDS
 from ..security import valid_code, valid_hex_color, valid_slug, valid_url
-from ..utils import gen_code, paginate, utcnow
+from ..utils import gen_code, paginate, short_url_for, utcnow
 
 from .bio import RESERVED_SLUGS
 
@@ -49,9 +49,7 @@ class BioUpdate(BaseModel):
 
 
 def _short_url(request: Request, link: Link, domain_name: str | None = None) -> str:
-    scheme = request.url.scheme
-    host = domain_name or request.headers.get("host", "").split(":")[0]
-    return f"{scheme}://{host}/s/{link.code}"
+    return short_url_for(request, link.code, domain_name)
 
 
 async def _domain_name(db: AsyncSession, link: Link) -> str | None:

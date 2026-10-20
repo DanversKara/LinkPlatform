@@ -80,6 +80,18 @@ async def _verified_domain_map(app) -> dict[str, dict]:
     return hosts
 
 
+async def _is_registered_domain(host: str) -> bool:
+    if not host:
+        return False
+    try:
+        async with AsyncSessionLocal() as db:
+            return (
+                await db.execute(select(Domain.id).where(Domain.domain == host))
+            ).scalar_one_or_none() is not None
+    except Exception:
+        return False
+
+
 class HostValidationMiddleware:
     """Reject requests whose Host header is not explicitly allowed."""
 
@@ -89,8 +101,17 @@ class HostValidationMiddleware:
     async def __call__(self, scope, receive, send):
         if scope["type"] == "http":
             host = _host_from_scope(scope)
+            path = scope.get("path")
+            # The TLS ask hook is called by Caddy as http://app:8000.
+            if path == "/api/tls-check":
+                await self.app(scope, receive, send)
+                return
             domain_hosts = await _verified_domain_map(scope["app"])
-            if host not in settings.allowed_hosts and host not in domain_hosts:
+            allowed = host in settings.allowed_hosts or host in domain_hosts
+            # Verifying a *pending* custom domain hits /api/health through it.
+            if not allowed and path == "/api/health":
+                allowed = await _is_registered_domain(host)
+            if not allowed:
                 resp = PlainTextResponse("Invalid host header", status_code=400)
                 await resp(scope, receive, send)
                 return
@@ -265,6 +286,9 @@ app.include_router(files.router)
 app.include_router(settings_user.router)
 app.include_router(reports.router)
 app.include_router(admin.router)
+# Must stay last: /{code} only catches paths no real page claimed.
+app.add_api_route("/{code}", redirect.bare_code_redirect, methods=["GET"],
+                  include_in_schema=False)
 
 
 @app.exception_handler(AuthRedirect)

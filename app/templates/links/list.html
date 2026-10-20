@@ -24,8 +24,9 @@
         <tr>
           <td>
             <a class="row-link" href="/links/{{ l.id }}/stats">{{ l.title or l.code }}</a><br>
-            <span class="short-chip"><span class="mono tiny">/{{ l.code }}</span>
-              <button class="icon-btn" style="width:26px;height:26px" data-copy="/{{ l.code }}" title="Copy short path" aria-label="Copy short path for {{ l.code }}"><svg aria-hidden="true"><use href="#i-copy"/></svg></button>
+            {% set su = short_urls[l.id] %}
+            <span class="short-chip"><a class="mono tiny" href="{{ su }}" target="_blank" rel="noopener" title="{{ su }}">{{ su.split('://', 1)[1] }}</a>
+              <button class="icon-btn" style="width:26px;height:26px" data-copy="{{ su }}" title="Copy short link" aria-label="Copy short link for {{ l.code }}"><svg aria-hidden="true"><use href="#i-copy"/></svg></button>
             </span>
           </td>
           <td class="ellipsis muted small" title="{{ l.original_url }}">{{ l.original_url }}</td>

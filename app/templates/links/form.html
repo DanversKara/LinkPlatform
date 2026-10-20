@@ -4,7 +4,7 @@
 <div class="page-head">
   <div>
     <h1>{% if is_new %}Create a new link{% else %}Edit link{% endif %}</h1>
-    {% if not is_new %}<p class="sub mono">/{{ link.code }}</p>{% endif %}
+    {% if not is_new %}<p class="sub mono">{% if short_url %}<a href="{{ short_url }}" target="_blank" rel="noopener">{{ short_url.split('://', 1)[1] }}</a> <button class="icon-btn" type="button" style="width:26px;height:26px;vertical-align:middle" data-copy="{{ short_url }}" title="Copy short link" aria-label="Copy short link"><svg aria-hidden="true"><use href="#i-copy"/></svg></button>{% else %}/s/{{ link.code }}{% endif %}</p>{% endif %}
   </div>
   <a class="btn btn-ghost" href="/links">Back to links</a>
 </div>

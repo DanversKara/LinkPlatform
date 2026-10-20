@@ -24,7 +24,7 @@ from ..models import (
 )
 from ..render import Redirect, T
 from ..security import get_client_ip
-from ..utils import paginate, svg_line_chart, utcnow
+from ..utils import paginate, reset_domain_cache, svg_line_chart, utcnow
 
 from .files import delete_stored_file
 
@@ -292,6 +292,7 @@ async def admin_domain_approve(domain_id: int, request: Request,
     await log_audit(db, "domain_approve", detail=f"domain={domain.domain}",
                     actor_id=admin.id, ip=get_client_ip(request))
     await db.commit()
+    reset_domain_cache(request.app)
     return Redirect("/admin/domains", "Domain approved.")
 
 
@@ -311,6 +312,7 @@ async def admin_domain_reject(domain_id: int, request: Request,
     await log_audit(db, "domain_reject", detail=f"domain={name}",
                     actor_id=admin.id, ip=get_client_ip(request))
     await db.commit()
+    reset_domain_cache(request.app)
     return Redirect("/admin/domains", "Domain rejected and removed.")
 
 

@@ -16,7 +16,7 @@ from ..deps import csrf_protect, log_audit, require_user
 from ..models import Click, Domain, Link, StoredFile, User
 from ..render import Redirect, T
 from ..security import RateLimiter, get_client_ip, valid_code, valid_url
-from ..utils import gen_code, paginate, qr_png_bytes, ref_domain, svg_bars, svg_line_chart, utcnow
+from ..utils import gen_code, paginate, short_url_for, qr_png_bytes, ref_domain, svg_bars, svg_line_chart, utcnow
 
 router = APIRouter(prefix="/links", dependencies=[Depends(csrf_protect)])
 create_limiter = RateLimiter()
@@ -52,9 +52,7 @@ async def _resolve_domain(db: AsyncSession, user: User, domain_id: str) -> Domai
 
 
 def _short_url(request: Request, link: Link, domain_name: str | None = None) -> str:
-    scheme = request.url.scheme
-    host = domain_name or request.headers.get("host", "").split(":")[0]
-    return f"{scheme}://{host}/s/{link.code}"
+    return short_url_for(request, link.code, domain_name)
 
 
 def _parse_expiry(value: str) -> datetime | None:
@@ -118,8 +116,12 @@ async def links_list(
                 await db.execute(select(Domain).where(Domain.id.in_(dids)))
             ).scalars().all()
             domain_names = {d.id: d.domain for d in drows}
+    short_urls = {
+        r.id: _short_url(request, r, domain_names.get(r.domain_id)) for r in rows
+    }
     return await T(request, "links/list.html", user=user, links=rows,
-                   q=q, pg=pg, pagination=pg, domain_names=domain_names)
+                   q=q, pg=pg, pagination=pg, domain_names=domain_names,
+                   short_urls=short_urls)
 
 
 @router.get("/new")
@@ -247,7 +249,8 @@ async def link_edit_form(link_id: int, request: Request, db: AsyncSession = Depe
         if d:
             domain_names[d.id] = d.domain
     return await T(request, "links/form.html", user=user, link=link,
-                   is_new=False, user_domains=domains, errors={})
+                   is_new=False, user_domains=domains, errors={},
+                   short_url=_short_url(request, link, domain_names.get(link.domain_id)))
 
 
 @router.get("/{link_id}/edit")

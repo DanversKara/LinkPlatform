@@ -647,3 +647,59 @@ def test_homepage_shorten_box_prefills(user_client):
     r = user_client.get("/links/new", params={"url": "https://example.com/very/long"})
     assert r.status_code == 200 and 'value="https://example.com/very/long"' in r.text
     assert 'action="/links/new"' in user_client.get("/").text or True
+
+
+# ---------- custom-domain short links (regression) ----------
+
+def test_custom_domain_short_link_end_to_end(client):
+    """Copy button must give the full https://<custom-domain>/s/<code> URL,
+    and that URL (plus the main-host and bare /<code> forms) must resolve
+    immediately after the domain is approved — no 5-minute cache wait."""
+    import re
+    c = client  # admin, logged in by test_admin_forced_password_change
+    h = csrf_headers(c)
+    r = c.post("/domains/new", data={"domain": "go.brand.test"},
+               headers=h, follow_redirects=False)
+    assert r.status_code in (302, 303), r.text[:300]
+
+    # Pending domain: health answers through it (needed for Verify DNS),
+    # but other pages don't, and Caddy's TLS ask hook allows it.
+    assert c.get("/api/health", headers={"host": "go.brand.test"}).status_code == 200
+    assert c.get("/login", headers={"host": "go.brand.test"}).status_code == 400
+    assert c.get("/api/tls-check?domain=go.brand.test").status_code == 200
+    assert c.get("/api/tls-check?domain=random.evil").status_code == 404
+
+    # Warm the domain cache while the domain is still pending.
+    c.get("/api/health")
+
+    r = c.get("/admin/domains")
+    did = re.search(r'/admin/domains/(\d+)/approve', r.text).group(1)
+    r = c.post(f"/admin/domains/{did}/approve", headers=h, follow_redirects=False)
+    assert r.status_code in (302, 303)
+
+    r = c.post("/links/new", data={"original_url": "https://example.com/brand",
+                                   "code": "brandy1", "domain_id": did,
+                                   "is_active": "1"},
+               headers=h, follow_redirects=False)
+    assert r.status_code in (302, 303), r.text[:300]
+
+    # The list's copy button carries the full custom-domain URL.
+    r = c.get("/links")
+    assert 'data-copy="http://go.brand.test/s/brandy1"' in r.text, \
+        re.findall(r'data-copy="[^"]*"', r.text)
+    lid = re.search(r'href="/links/(\d+)/stats"', r.text)
+    r = c.get(f"/links/{lid.group(1)}/stats")
+    assert 'data-copy="http://go.brand.test/s/brandy1"' in r.text
+
+    # Resolves on the custom domain right away (cache was reset on approve).
+    r = c.get("/s/brandy1", headers={"host": "go.brand.test"}, follow_redirects=False)
+    assert r.status_code == 302 and r.headers["location"] == "https://example.com/brand"
+    # Bare /code on the custom domain too.
+    r = c.get("/brandy1", headers={"host": "go.brand.test"}, follow_redirects=False)
+    assert r.status_code == 302
+    # And on the main host (codes are globally unique).
+    r = c.get("/s/brandy1", follow_redirects=False)
+    assert r.status_code == 302
+    # Real pages still win over the bare-code route.
+    assert c.get("/links").status_code == 200
+    assert c.get("/nope-not-a-code").status_code == 404

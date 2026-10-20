@@ -17,6 +17,34 @@ def utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def reset_domain_cache(app) -> None:
+    """Drop the cached verified-domain map so host routing picks up a domain
+    the moment it is verified, approved, edited or removed (instead of up to
+    5 minutes later)."""
+    app.state.domain_cache = {"expires": 0, "hosts": {}}
+
+
+def short_url_for(request, code: str, domain_name: str | None = None) -> str:
+    """Full public short URL for a link code.
+
+    Custom-domain links use that domain; others use BASE_URL (or the current
+    host when BASE_URL is unset). The scheme comes from BASE_URL when it is
+    set, because behind a TLS proxy the app itself only ever sees http.
+    """
+    from .config import settings  # local import avoids a cycle at startup
+
+    base = settings.BASE_URL.strip().rstrip("/")
+    forwarded = (request.headers.get("x-forwarded-proto", "") if settings.TRUST_PROXY else "")
+    scheme = (urlsplit(base).scheme if base else "") or forwarded.split(",")[0].strip() \
+        or request.url.scheme or "http"
+    if domain_name:
+        return f"{scheme}://{domain_name}/s/{code}"
+    if base:
+        return f"{base}/s/{code}"
+    host = request.headers.get("host", "") or "localhost"
+    return f"{scheme}://{host}/s/{code}"
+
+
 def _as_utc(dt: datetime | None) -> datetime | None:
     if dt is None:
         return None

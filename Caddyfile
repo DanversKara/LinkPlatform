@@ -1,6 +1,15 @@
 # LinkPlatform v12 — Caddy edge config (rendered by the installer with your domain).
 # Only used when a DOMAIN is set (docker compose --profile edge).
-{$DOMAIN} {
+{
+    # Custom domains added in the app get HTTPS automatically on first visit.
+    # Caddy asks the app first, so certificates are only issued for the main
+    # domain and domains a user has actually added under Domains.
+    on_demand_tls {
+        ask http://app:8000/api/tls-check
+    }
+}
+
+(app_proxy) {
     encode gzip
     reverse_proxy app:8000
     header {
@@ -10,4 +19,17 @@
         Referrer-Policy "strict-origin-when-cross-origin"
         -Server
     }
+}
+
+# Main site
+{$DOMAIN} {
+    import app_proxy
+}
+
+# Every custom domain (go.example.com, etc.)
+https:// {
+    tls {
+        on_demand
+    }
+    import app_proxy
 }
